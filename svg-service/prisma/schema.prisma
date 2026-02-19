@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Collection {
+  id         String       @id @default(uuid())
+  name       String
+  emoji      String?
+  isDefault  Boolean      @default(false)
+  parentId   String?
+  parent     Collection?  @relation("SubCollections", fields: [parentId], references: [id], onDelete: Cascade)
+  children   Collection[] @relation("SubCollections")
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  archivedAt DateTime?
+  svgs       Svg[]
+}
+
+model Svg {
+  id           String     @id @default(uuid())
+  name         String
+  svg          String
+  type         String
+  contentHash  String
+  collectionId String
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  archivedAt   DateTime?
+
+  @@index([contentHash])
+  @@index([collectionId])
+}
+
+model Settings {
+  id                    String  @id @default("singleton")
+  defaultCollectionId   String?
+  cardSize              Int     @default(192)
+  showSizes             Boolean @default(true)
+  showNames             Boolean @default(true)
+  optimizationPreset    String  @default("default")
+  archiveRetentionDays  Int     @default(90)
+
+  // Backup settings
+  backupEnabled         Boolean @default(false)
+  backupSchedule        String  @default("0 2 * * *")
+  backupRetentionDays   Int     @default(30)
+  googleDriveEnabled    Boolean @default(false)
+  localBackupEnabled    Boolean @default(true)
+}
+
+model GoogleDriveAuth {
+  id           String   @id @default("singleton")
+  accessToken  String
+  refreshToken String
+  tokenExpiry  DateTime
+  email        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model GoogleDriveConfig {
+  id           String   @id @default("singleton")
+  clientId     String
+  clientSecret String
+  redirectUri  String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Backup {
+  id          String   @id @default(uuid())
+  filename    String
+  size        Int
+  type        String
+  status      String
+  error       String?
+  driveFileId String?
+  createdAt   DateTime @default(now())
+}

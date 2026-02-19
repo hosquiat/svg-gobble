@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install)",
+      "Bash(npm run build:*)",
+      "Bash(timeout 5 npm run dev:*)",
+      "Bash(docker build:*)",
+      "Bash(docker compose:*)",
+      "Bash(curl:*)"
+    ]
+  }
+}

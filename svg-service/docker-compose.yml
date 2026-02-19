@@ -1,0 +1,27 @@
+name: svg-gobble
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=file:./data/svg-gobble.db
+      - BACKUP_DIR=/app/backups
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI:-http://localhost:3000/api/google-drive/oauth-callback}
+    volumes:
+      - svg-gobble-data:/app/prisma/data
+      - svg-gobble-backups:/app/backups
+    restart: unless-stopped
+
+volumes:
+  svg-gobble-data:
+    driver: local
+  svg-gobble-backups:
+    driver: local
