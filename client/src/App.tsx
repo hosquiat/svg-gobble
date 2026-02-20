@@ -866,18 +866,18 @@ function App() {
 
         {/* Main Area */}
         <main className="flex-1 overflow-y-auto flex flex-col">
-          {/* Empty state - full screen drop zone */}
-          {activeCollection && groupedSvgs.length === 0 && (
+          {/* Empty state - full screen drop zone (collection view only) */}
+          {activeView !== 'all-svgs' && activeCollection && activeGroupedSvgs.length === 0 && (
             <UploadZone onUpload={handleUpload} fullScreen />
           )}
 
-          {/* Compact drop zone when collection has SVGs */}
-          {activeCollection && groupedSvgs.length > 0 && (
+          {/* Compact drop zone when collection has SVGs (collection view only) */}
+          {activeView !== 'all-svgs' && activeCollection && activeGroupedSvgs.length > 0 && (
             <UploadZone onUpload={handleUpload} compact />
           )}
 
           {/* SVG Grid */}
-          {activeCollection && groupedSvgs.length > 0 && (
+          {activeGroupedSvgs.length > 0 && (
             <SvgGrid
               svgs={filteredAndSortedSvgs}
               groupedSvgs={!searchQuery.trim() ? activeGroupedSvgs : undefined}
