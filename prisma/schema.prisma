@@ -83,3 +83,27 @@ model Backup {
   driveFileId String?
   createdAt   DateTime @default(now())
 }
+
+model JigTemplate {
+  id           String    @id @default(uuid())
+  name         String
+  originalFile String    // full .lbrn2 XML stored as text
+  slotCount    Int
+  slots        JigSlot[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model JigSlot {
+  id         String      @id @default(uuid())
+  templateId String
+  template   JigTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  slotIndex  Int         // 0-based order
+  cx         Float       // center X in mm (LightBurn world coords)
+  cy         Float       // center Y in mm
+  width      Float       // slot width in mm
+  height     Float       // slot height in mm
+  label      String?     // optional label from original file (e.g. "0/6")
+
+  @@index([templateId])
+}

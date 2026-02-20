@@ -8,6 +8,7 @@ import svgsRouter from './routes/svgs'
 import settingsRouter from './routes/settings'
 import backupRouter from './routes/backup'
 import googleDriveRouter from './routes/googleDrive'
+import jigRouter from './routes/jig'
 import { startArchiveCleanupJob } from './jobs/archiveCleanup'
 import { startBackupJob } from './jobs/backupJob'
 
@@ -23,6 +24,7 @@ app.use('/api/svgs', svgsRouter)
 app.use('/api/settings', settingsRouter)
 app.use('/api/backup', backupRouter)
 app.use('/api/google-drive', googleDriveRouter)
+app.use('/api/jig-templates', jigRouter)
 
 // Serve static files from client build
 const clientPath = path.join(__dirname, '../client/dist')

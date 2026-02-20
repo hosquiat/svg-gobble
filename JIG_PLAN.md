@@ -315,9 +315,17 @@ Run: `npx prisma db push` after schema changes.
 ## Status
 
 - [x] Planning complete
-- [ ] Phase 1: LightBurn parser
-- [ ] Phase 2: Database schema
+- [x] Phase 1: LightBurn parser — `src/services/lightburnParser.ts`, `src/routes/jig.ts`, mounted at `/api/jig-templates`
+- [x] Phase 2: Database schema — `JigTemplate` + `JigSlot` models added to `prisma/schema.prisma`, `npx prisma db push` applied
 - [ ] Phase 3: Template Editor UI
 - [ ] Phase 4: SVG → LightBurn converter (requires research spike)
 - [ ] Phase 5: Production Generator UI
 - [ ] Phase 6: LightBurn file generator
+
+## Parser Notes (from real file testing)
+- 808 shapes total (86 groups, 548 paths, 61 ellipses, 113 text) — matches grep count exactly
+- VertCache (VertID:PrimID → LocalBounds) fixes shared-geometry paths that have no inline VertList
+- Depth-1 Groups are the individual domino slot candidates (~20×20mm each)
+- Depth-0 Groups are row/column containers (can be up to 396mm wide — users skip these)
+- jig has 32 depth-1 group candidates; actual domino count TBD by user selection in template editor
+- Canvas bounds: x=-16.9 y=-274 w=553 h=568 mm
