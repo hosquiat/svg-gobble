@@ -6,7 +6,8 @@
       "Bash(timeout 5 npm run dev:*)",
       "Bash(docker build:*)",
       "Bash(docker compose:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(xargs:*)"
     ]
   }
 }

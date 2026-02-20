@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from 'react'
 import clsx from 'clsx'
 import { Sidebar, UploadZone, SvgGrid, CreateCollectionModal, SvgEditor } from './components'
+import type { GroupedSvg } from './components/SvgGrid'
 import { SettingsPage } from './components/SettingsPage'
 import { DuplicateWarningModal } from './components/DuplicateWarningModal'
 import { useLocalStorage } from './hooks/useLocalStorage'
@@ -42,6 +43,7 @@ function App() {
   const { settings, updateSettings } = useSettings()
 
   const [activeCollectionId, setActiveCollectionId] = useLocalStorage<string | null>('active-collection', null)
+  const [activeView, setActiveView] = useLocalStorage<'collection' | 'all-svgs'>('active-view', 'collection')
 
   // View settings (local, sync with server settings on load)
   const [showSizes, setShowSizes] = useLocalStorage('view-show-sizes', true)
@@ -144,11 +146,29 @@ function App() {
     return result
   }, [])
 
-  // Grouped SVGs with collection info
+  // Grouped SVGs with collection info (for active collection view)
   const groupedSvgs = useMemo(() => {
     if (!activeCollection) return []
     return getCollectionWithSubsSvgs(activeCollection)
   }, [activeCollection, getCollectionWithSubsSvgs])
+
+  // All SVGs across every non-archived collection, grouped by collection for the overview view
+  const allGroupedSvgs = useMemo<GroupedSvg[]>(() => {
+    const result: GroupedSvg[] = []
+    for (const c of allCollections) {
+      if (!c.archivedAt) {
+        for (const svg of c.svgs) {
+          if (!svg.archivedAt) {
+            result.push({ svg, collectionName: c.name, isSubCollection: true })
+          }
+        }
+      }
+    }
+    return result
+  }, [allCollections])
+
+  // Active grouped list depends on current view
+  const activeGroupedSvgs = activeView === 'all-svgs' ? allGroupedSvgs : groupedSvgs
 
   // Filter and sort SVGs - search all collections when query is entered
   const filteredAndSortedSvgs = useMemo(() => {
@@ -166,8 +186,7 @@ function App() {
         }
       }
     } else {
-      // No search - show active collection and its sub-collections
-      svgs = groupedSvgs.map(g => g.svg)
+      svgs = activeGroupedSvgs.map(g => g.svg)
     }
 
     // Apply sort
@@ -185,12 +204,12 @@ function App() {
       default:
         return svgs
     }
-  }, [groupedSvgs, allCollections, searchQuery, sortBy])
+  }, [activeGroupedSvgs, allCollections, searchQuery, sortBy])
 
-  // Clear selection when changing collections or search
+  // Clear selection when changing collections, view, or search
   useEffect(() => {
     setSelectedSvgIds(new Set())
-  }, [activeCollectionId, searchQuery])
+  }, [activeCollectionId, activeView, searchQuery])
 
   // Selection handlers
   const toggleSvgSelection = useCallback((id: string) => {
@@ -510,6 +529,7 @@ function App() {
         activeCollectionId={activeCollectionId}
         onSelectCollection={(id) => {
           setActiveCollectionId(id)
+          setActiveView('collection')
           setSidebarOpen(false) // Close on mobile after selecting
         }}
         onCreateCollection={() => openCreateModal()}
@@ -534,6 +554,12 @@ function App() {
         onClose={() => setSidebarOpen(false)}
         isCollapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        onSelectAllView={() => {
+          setActiveView('all-svgs')
+          setSidebarOpen(false)
+        }}
+        isAllViewActive={activeView === 'all-svgs'}
+        totalSvgCount={totalSvgCount}
       />
 
       {/* Main Content */}
@@ -555,6 +581,8 @@ function App() {
                 <h1 className="text-lg font-semibold text-gray-900">
                   Search Results
                 </h1>
+              ) : activeView === 'all-svgs' ? (
+                <h1 className="text-lg font-semibold text-gray-900">All SVGs</h1>
               ) : (
                 <>
                   {activeCollection?.isDefault && (
@@ -852,7 +880,7 @@ function App() {
           {activeCollection && groupedSvgs.length > 0 && (
             <SvgGrid
               svgs={filteredAndSortedSvgs}
-              groupedSvgs={!searchQuery.trim() ? groupedSvgs : undefined}
+              groupedSvgs={!searchQuery.trim() ? activeGroupedSvgs : undefined}
               collections={allCollections}
               currentCollectionId={activeCollectionId}
               onDeleteSvg={handleDeleteSvg}

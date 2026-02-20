@@ -332,7 +332,75 @@ export async function getValidAccessToken(): Promise<string | null> {
 }
 
 /**
- * Upload file to Google Drive
+ * Get or create a Google Drive folder by name within an optional parent folder
+ */
+async function getOrCreateDriveFolder(
+  accessToken: string,
+  name: string,
+  parentId?: string
+): Promise<string> {
+  let query = `name='${name}' and mimeType='application/vnd.google-apps.folder' and trashed=false`
+  if (parentId) {
+    query += ` and '${parentId}' in parents`
+  }
+
+  const params = new URLSearchParams({
+    q: query,
+    fields: 'files(id, name)',
+  })
+
+  const searchResponse = await fetch(`${GOOGLE_DRIVE_FILES_URL}?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+
+  if (!searchResponse.ok) {
+    const error = await searchResponse.text()
+    throw new Error(`Failed to search for Drive folder: ${error}`)
+  }
+
+  const data = (await searchResponse.json()) as DriveListResponse
+  if (data.files.length > 0) {
+    return data.files[0].id
+  }
+
+  // Folder not found — create it
+  const folderMetadata: Record<string, unknown> = {
+    name,
+    mimeType: 'application/vnd.google-apps.folder',
+  }
+  if (parentId) {
+    folderMetadata.parents = [parentId]
+  }
+
+  const createResponse = await fetch(GOOGLE_DRIVE_FILES_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(folderMetadata),
+  })
+
+  if (!createResponse.ok) {
+    const error = await createResponse.text()
+    throw new Error(`Failed to create Drive folder "${name}": ${error}`)
+  }
+
+  const folder = (await createResponse.json()) as DriveFile
+  return folder.id
+}
+
+/**
+ * Get or create the "App Backups/svg-gobble" folder chain and return the
+ * innermost folder ID.
+ */
+async function getBackupFolderId(accessToken: string): Promise<string> {
+  const appBackupsFolderId = await getOrCreateDriveFolder(accessToken, 'App Backups')
+  return getOrCreateDriveFolder(accessToken, 'svg-gobble', appBackupsFolderId)
+}
+
+/**
+ * Upload file to Google Drive inside "App Backups/svg-gobble"
  */
 export async function uploadToGoogleDrive(
   accessToken: string,
@@ -342,10 +410,13 @@ export async function uploadToGoogleDrive(
   const fileContent = fs.readFileSync(filePath, 'utf-8')
   const size = Buffer.byteLength(fileContent, 'utf-8')
 
-  // Create file metadata
+  const parentFolderId = await getBackupFolderId(accessToken)
+
+  // Create file metadata with parent folder
   const metadata = {
     name: filename,
     mimeType: 'application/json',
+    parents: [parentFolderId],
   }
 
   // Create multipart body
@@ -398,11 +469,13 @@ export async function deleteFromGoogleDrive(accessToken: string, fileId: string)
 }
 
 /**
- * List backups stored in Google Drive
+ * List backups stored in Google Drive inside "App Backups/svg-gobble"
  */
 export async function listDriveBackups(accessToken: string): Promise<DriveFile[]> {
+  const folderId = await getBackupFolderId(accessToken)
+
   const params = new URLSearchParams({
-    q: "name contains 'backup-' and mimeType = 'application/json'",
+    q: `'${folderId}' in parents and mimeType = 'application/json' and trashed=false`,
     fields: 'files(id, name, size, createdTime, modifiedTime)',
     orderBy: 'createdTime desc',
   })

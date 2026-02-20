@@ -34,6 +34,9 @@ interface SidebarProps {
   onClose: () => void
   isCollapsed: boolean
   onToggleCollapse: () => void
+  onSelectAllView?: () => void
+  isAllViewActive?: boolean
+  totalSvgCount?: number
 }
 
 export function Sidebar({
@@ -56,6 +59,9 @@ export function Sidebar({
   onClose,
   isCollapsed,
   onToggleCollapse,
+  onSelectAllView,
+  isAllViewActive = false,
+  totalSvgCount,
 }: SidebarProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const [showArchived, setShowArchived] = useState(false)
@@ -185,7 +191,7 @@ export function Sidebar({
         </div>
 
       {/* New Collection Button */}
-      <div className={clsx('mb-2', isCollapsed ? 'px-2' : 'px-3')}>
+      <div className={clsx('mb-1', isCollapsed ? 'px-2' : 'px-3')}>
         <button
           onClick={onCreateCollection}
           className={clsx(
@@ -202,6 +208,42 @@ export function Sidebar({
           {!isCollapsed && <span>New collection</span>}
         </button>
       </div>
+
+      {/* All SVGs View Button */}
+      {onSelectAllView && (
+        <div className={clsx('mb-2', isCollapsed ? 'px-2' : 'px-3')}>
+          <button
+            onClick={onSelectAllView}
+            className={clsx(
+              'flex items-center text-sm transition-colors',
+              isCollapsed
+                ? 'w-10 h-10 justify-center rounded-lg'
+                : 'w-full gap-2 px-3 py-2 rounded-lg',
+              isAllViewActive
+                ? 'bg-gray-100 text-gray-900'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+            )}
+            title={isCollapsed ? 'All SVGs' : undefined}
+          >
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+            </svg>
+            {!isCollapsed && (
+              <>
+                <span className="flex-1 text-left">All SVGs</span>
+                {totalSvgCount !== undefined && (
+                  <span className={clsx(
+                    'text-xs px-1.5 py-0.5 rounded-full',
+                    isAllViewActive ? 'bg-white text-gray-600' : 'bg-gray-100 text-gray-500'
+                  )}>
+                    {totalSvgCount}
+                  </span>
+                )}
+              </>
+            )}
+          </button>
+        </div>
+      )}
 
       {/* Collections List */}
       <div className={clsx('flex-1 overflow-y-auto', isCollapsed ? 'px-2' : 'px-3')}>

@@ -94,7 +94,7 @@ export function CreateCollectionModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (name.trim() && svgs.length > 0) {
+    if (name.trim()) {
       onCreate(name.trim(), svgs)
       onClose()
     }
@@ -106,7 +106,7 @@ export function CreateCollectionModal({
     }
   }
 
-  const canSubmit = name.trim() && svgs.length > 0
+  const canSubmit = name.trim().length > 0
 
   if (!isOpen) return null
 
@@ -185,7 +185,7 @@ export function CreateCollectionModal({
                     <span className="text-red-500 font-medium">Upload files</span>
                     <span className="text-gray-600"> or drag and drop</span>
                   </div>
-                  <p className="text-xs text-gray-500">SVG files up to 10mb (at least 1 required)</p>
+                  <p className="text-xs text-gray-500">SVG files up to 10mb (optional)</p>
                 </div>
               </label>
 
