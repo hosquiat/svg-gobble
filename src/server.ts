@@ -16,7 +16,7 @@ const app = express()
 const PORT = process.env.PORT || 3000
 const DEFAULT_TIMEOUT = 30000
 
-app.use(express.json({ limit: '10mb' }))
+app.use(express.json({ limit: '50mb' }))
 
 // Mount API routes
 app.use('/api/collections', collectionsRouter)
@@ -25,6 +25,7 @@ app.use('/api/settings', settingsRouter)
 app.use('/api/backup', backupRouter)
 app.use('/api/google-drive', googleDriveRouter)
 app.use('/api/jig-templates', jigRouter)
+app.use('/api/jig', jigRouter)
 
 // Serve static files from client build
 const clientPath = path.join(__dirname, '../client/dist')

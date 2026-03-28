@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express'
 import { parseLightBurnFile } from '../services/lightburnParser'
+import { generateLightBurnFile } from '../services/lightburnGenerator'
 import prisma from '../db'
 
 const router = Router()
@@ -153,6 +154,81 @@ router.delete('/:id', async (req: Request<{ id: string }>, res: Response) => {
   } catch (error) {
     console.error('Error deleting jig template:', error)
     return res.status(500).json({ success: false, error: 'Failed to delete jig template' })
+  }
+})
+
+// ---------------------------------------------------------------------------
+// POST /api/jig/generate  (also reachable as /api/jig-templates/generate)
+// Generate a .lbrn2 file from a template + slot assignments.
+// Body: {
+//   templateId: string,
+//   assignments: Array<{ slotIndex: number, svgId: string }>,
+//   mode: 'full' | 'designs-only'
+// }
+// Response: .lbrn2 file download
+// ---------------------------------------------------------------------------
+router.post('/generate', async (req: Request, res: Response) => {
+  try {
+    const { templateId, assignments, mode } = req.body as {
+      templateId?: string
+      assignments?: Array<{ slotIndex: number; svgId: string }>
+      mode?: 'full' | 'designs-only'
+    }
+
+    if (!templateId || !Array.isArray(assignments)) {
+      return res.status(400).json({ success: false, error: 'Missing required fields: templateId, assignments' })
+    }
+
+    const outputMode = mode === 'designs-only' ? 'designs-only' : 'full'
+
+    // Fetch the template (with originalFile and slots)
+    const template = await prisma.jigTemplate.findUnique({
+      where: { id: templateId },
+      include: { slots: { orderBy: { slotIndex: 'asc' } } },
+    })
+    if (!template) {
+      return res.status(404).json({ success: false, error: 'Template not found' })
+    }
+
+    // Fetch unique SVG IDs
+    const svgIds = [...new Set(assignments.map(a => a.svgId))]
+    const svgs = await prisma.svg.findMany({
+      where: { id: { in: svgIds } },
+      select: { id: true, svg: true },
+    })
+    const svgMap = new Map(svgs.map(s => [s.id, s.svg]))
+
+    // Build slot assignments with SVG content
+    const slotAssignments = assignments
+      .map(a => {
+        const svgContent = svgMap.get(a.svgId)
+        if (!svgContent) return null
+        return { slotIndex: a.slotIndex, svgContent }
+      })
+      .filter((a): a is { slotIndex: number; svgContent: string } => a !== null)
+
+    // Detect mirror settings from original file
+    const mirrorX = template.originalFile.includes('MirrorX="True"')
+    const mirrorY = template.originalFile.includes('MirrorY="True"')
+
+    // Generate the file
+    const lbrnXml = generateLightBurnFile(
+      template.originalFile,
+      template.slots,
+      slotAssignments,
+      { mode: outputMode, mirrorX, mirrorY },
+    )
+
+    const filename = `${template.name.replace(/[^a-z0-9_\-]/gi, '_')}-jig.lbrn2`
+    res.setHeader('Content-Type', 'application/octet-stream')
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
+    res.send(lbrnXml)
+  } catch (error) {
+    console.error('Error generating LightBurn file:', error)
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to generate LightBurn file',
+    })
   }
 })
 

@@ -25,6 +25,7 @@
     "express": "^4.21.0",
     "fast-xml-parser": "^5.3.7",
     "node-cron": "^3.0.0",
+    "svgpath": "^2.6.0",
     "uuid": "^10.0.0"
   },
   "devDependencies": {

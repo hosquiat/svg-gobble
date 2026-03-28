@@ -37,6 +37,8 @@ interface SidebarProps {
   onSelectAllView?: () => void
   isAllViewActive?: boolean
   totalSvgCount?: number
+  onSelectJigView?: () => void
+  isJigViewActive?: boolean
 }
 
 export function Sidebar({
@@ -62,6 +64,8 @@ export function Sidebar({
   onSelectAllView,
   isAllViewActive = false,
   totalSvgCount,
+  onSelectJigView,
+  isJigViewActive = false,
 }: SidebarProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const [showArchived, setShowArchived] = useState(false)
@@ -241,6 +245,30 @@ export function Sidebar({
                 )}
               </>
             )}
+          </button>
+        </div>
+      )}
+
+      {/* Jig Templates Button */}
+      {onSelectJigView && (
+        <div className={clsx('mb-2', isCollapsed ? 'px-2' : 'px-3')}>
+          <button
+            onClick={onSelectJigView}
+            className={clsx(
+              'flex items-center text-sm transition-colors',
+              isCollapsed
+                ? 'w-10 h-10 justify-center rounded-lg'
+                : 'w-full gap-2 px-3 py-2 rounded-lg',
+              isJigViewActive
+                ? 'bg-gray-100 text-gray-900'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+            )}
+            title={isCollapsed ? 'Jig Templates' : undefined}
+          >
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
+            </svg>
+            {!isCollapsed && <span className="flex-1 text-left">Jig Templates</span>}
           </button>
         </div>
       )}

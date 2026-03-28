@@ -1,8 +1,9 @@
 import { useState, useCallback, useMemo, useEffect } from 'react'
 import clsx from 'clsx'
-import { Sidebar, UploadZone, SvgGrid, CreateCollectionModal, SvgEditor } from './components'
+import { Sidebar, UploadZone, SvgGrid, CreateCollectionModal, SvgEditor, JigGeneratorModal } from './components'
 import type { GroupedSvg } from './components/SvgGrid'
 import { SettingsPage } from './components/SettingsPage'
+import { JigTemplateEditor } from './components/JigTemplateEditor'
 import { DuplicateWarningModal } from './components/DuplicateWarningModal'
 import { useLocalStorage } from './hooks/useLocalStorage'
 import { useCollections, flattenCollections } from './hooks/useCollections'
@@ -43,7 +44,7 @@ function App() {
   const { settings, updateSettings } = useSettings()
 
   const [activeCollectionId, setActiveCollectionId] = useLocalStorage<string | null>('active-collection', null)
-  const [activeView, setActiveView] = useLocalStorage<'collection' | 'all-svgs'>('active-view', 'collection')
+  const [activeView, setActiveView] = useLocalStorage<'collection' | 'all-svgs' | 'jig'>('active-view', 'collection')
 
   // View settings (local, sync with server settings on load)
   const [showSizes, setShowSizes] = useLocalStorage('view-show-sizes', true)
@@ -499,6 +500,9 @@ function App() {
   // State for move dropdown in selection panel
   const [showMoveDropdown, setShowMoveDropdown] = useState(false)
 
+  // Jig generator modal
+  const [showJigGeneratorModal, setShowJigGeneratorModal] = useState(false)
+
   const closeAllMenus = () => {
     setViewMenuOpen(false)
     setSortMenuOpen(false)
@@ -560,10 +564,18 @@ function App() {
         }}
         isAllViewActive={activeView === 'all-svgs'}
         totalSvgCount={totalSvgCount}
+        onSelectJigView={() => {
+          setActiveView('jig')
+          setSidebarOpen(false)
+        }}
+        isJigViewActive={activeView === 'jig'}
       />
 
+      {/* Jig Template Editor (full replacement when in jig view) */}
+      {activeView === 'jig' && <JigTemplateEditor />}
+
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 h-screen">
+      <div className={clsx('flex-1 flex flex-col min-w-0 h-screen', activeView === 'jig' && 'hidden')}>
         {/* Header */}
         <header className="flex-shrink-0 bg-white border-b border-gray-200">
           <div className="flex items-center justify-between px-4 lg:px-6 py-3">
@@ -959,6 +971,15 @@ function App() {
             {/* Actions */}
             <div className="p-4 border-t border-gray-200 space-y-2">
               <button
+                onClick={() => setShowJigGeneratorModal(true)}
+                className="w-full flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+                </svg>
+                Generate Jig File
+              </button>
+              <button
                 onClick={copySelectedSvgs}
                 className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
               >
@@ -1074,6 +1095,13 @@ function App() {
           onClose={() => setEditingSvg(null)}
         />
       )}
+
+      {/* Jig Generator Modal */}
+      <JigGeneratorModal
+        isOpen={showJigGeneratorModal}
+        onClose={() => setShowJigGeneratorModal(false)}
+        selectedSvgs={selectedSvgs}
+      />
 
       {/* Click outside to close dropdowns */}
       {(viewMenuOpen || sortMenuOpen || sizeMenuOpen) && (

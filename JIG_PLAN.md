@@ -317,10 +317,20 @@ Run: `npx prisma db push` after schema changes.
 - [x] Planning complete
 - [x] Phase 1: LightBurn parser — `src/services/lightburnParser.ts`, `src/routes/jig.ts`, mounted at `/api/jig-templates`
 - [x] Phase 2: Database schema — `JigTemplate` + `JigSlot` models added to `prisma/schema.prisma`, `npx prisma db push` applied
-- [ ] Phase 3: Template Editor UI
-- [ ] Phase 4: SVG → LightBurn converter (requires research spike)
-- [ ] Phase 5: Production Generator UI
-- [ ] Phase 6: LightBurn file generator
+- [x] Phase 3: Template Editor UI — `client/src/components/JigTemplateEditor.tsx`, `JigCanvas.tsx`, `client/src/api/jig.ts`, `client/src/hooks/useJigTemplates.ts`. Sidebar + App.tsx updated.
+- [x] Phase 4: SVG → LightBurn converter — `src/services/svgToLightburn.ts`. Decodes VertList format (V x y c0x... c1x...), encodes SVG paths as LightBurn VertList/PrimList.
+- [x] Phase 5: Production Generator UI — `client/src/components/JigGeneratorModal.tsx`, `JigSlotPreview.tsx`. "Generate Jig File" button in selection panel.
+- [x] Phase 6: LightBurn file generator — `src/services/lightburnGenerator.ts`, `POST /api/jig/generate` endpoint (also accessible at `/api/jig-templates/generate`).
+
+## VertList/PrimList Format (decoded from domino-jig.lbrn2)
+- `V{x} {y}` = anchor vertex at (x, y)
+- `c0x{val}` / `c0y{val}` = incoming bezier handle. Value `1` alone means smooth/auto. Explicit coords: `c0x{hx}c0y{hy}`
+- `c1x{val}` / `c1y{val}` = outgoing bezier handle. Same encoding.
+- `L{i} {j}` in PrimList = straight line from vertex i to j
+- `B{i} {j}` in PrimList = cubic bezier from vertex i to j (vertex i's c1 = cp1, vertex j's c0 = cp2)
+- Multiple sub-paths in one Shape: vertices are flat-indexed, PrimList entries can reference any index
+- Closed path: last PrimList entry connects back to the first vertex of the sub-path (e.g. `L5 0`)
+- MirrorY=True in template: negate Y coords of all design vertices before encoding
 
 ## Parser Notes (from real file testing)
 - 808 shapes total (86 groups, 548 paths, 61 ellipses, 113 text) — matches grep count exactly
