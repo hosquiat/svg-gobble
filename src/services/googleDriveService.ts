@@ -276,7 +276,10 @@ export async function revokeTokens(accessToken: string): Promise<void> {
     console.warn('Failed to revoke token, but continuing with disconnect')
   }
 
-  // Delete stored auth from database
+  await prisma.googleDriveAuth.deleteMany()
+}
+
+export async function clearStoredAuth(): Promise<void> {
   await prisma.googleDriveAuth.deleteMany()
 }
 

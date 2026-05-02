@@ -1,0 +1,6 @@
+name: svg-gobble
+
+services:
+  app:
+    image: ${APP_IMAGE:-git.sogenius.io/hos/svg-gobble:latest}
+    build: !reset null

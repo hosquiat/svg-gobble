@@ -4,6 +4,7 @@ import {
   exchangeCodeForTokens,
   getUserInfo,
   revokeTokens,
+  clearStoredAuth,
   getValidAccessToken,
   saveGoogleDriveAuth,
   getConnectionStatus,
@@ -245,6 +246,8 @@ router.post('/disconnect', async (_req: Request, res: Response) => {
 
     if (accessToken) {
       await revokeTokens(accessToken)
+    } else {
+      await clearStoredAuth()
     }
 
     res.json({ success: true, message: 'Disconnected from Google Drive' })
