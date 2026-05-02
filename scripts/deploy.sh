@@ -41,7 +41,7 @@ APP_IMAGE="${VERSIONED_TAG}" \
   docker compose \
     -f "${COMPOSE_FILE}" \
     -f "${COMPOSE_PROD_FILE}" \
-    up -d --remove-orphans
+    up -d --force-recreate --remove-orphans
 
 echo "==> Removing dangling images"
 docker image prune -f
