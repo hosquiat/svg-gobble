@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import clsx from 'clsx'
 import type { Settings, Collection } from '../types'
 import { BackupSettings } from './BackupSettings'
+import { DatabaseSettings } from './DatabaseSettings'
+import { versionApi } from '../api/client'
 
 interface SettingsPageProps {
   settings: Settings
@@ -10,7 +12,7 @@ interface SettingsPageProps {
   onClose: () => void
 }
 
-type TabId = 'general' | 'backup'
+type TabId = 'general' | 'backup' | 'database'
 
 const CARD_SIZE_OPTIONS = [
   { value: 100, label: 'XS (100px)' },
@@ -30,6 +32,11 @@ export function SettingsPage({
   const [activeTab, setActiveTab] = useState<TabId>('general')
   const [localSettings, setLocalSettings] = useState(settings)
   const [saving, setSaving] = useState(false)
+  const [appVersion, setAppVersion] = useState<string>('')
+
+  useEffect(() => {
+    versionApi.get().then(setAppVersion)
+  }, [])
 
   // Find default collection name
   const defaultCollection = collections.find(c => c.isDefault)
@@ -58,8 +65,9 @@ export function SettingsPage({
   }
 
   const tabs: { id: TabId; label: string }[] = [
-    { id: 'general', label: 'General' },
-    { id: 'backup', label: 'Backup' },
+    { id: 'general',  label: 'General' },
+    { id: 'backup',   label: 'Backup' },
+    { id: 'database', label: 'Database' },
   ]
 
   return (
@@ -227,6 +235,15 @@ export function SettingsPage({
                   Archived collections will be automatically deleted after this period
                 </p>
               </div>
+
+              {/* App Version */}
+              {appVersion && (
+                <div className="pt-4 border-t border-gray-100">
+                  <p className="text-xs text-gray-400">
+                    SVG Gobble v{appVersion}
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -235,6 +252,10 @@ export function SettingsPage({
               settings={localSettings}
               onUpdateSettings={handleBackupSettingsUpdate}
             />
+          )}
+
+          {activeTab === 'database' && (
+            <DatabaseSettings />
           )}
         </div>
 

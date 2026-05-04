@@ -103,6 +103,16 @@ function App() {
     }
   }, [activeCollectionId, allCollections, setActiveCollectionId])
 
+  // Close mobile sidebar overlay when resizing up to desktop
+  useEffect(() => {
+    const mql = window.matchMedia('(min-width: 1024px)')
+    const handleChange = (e: MediaQueryListEvent) => {
+      if (e.matches) setSidebarOpen(false)
+    }
+    mql.addEventListener('change', handleChange)
+    return () => mql.removeEventListener('change', handleChange)
+  }, [])
+
   // Sync settings from server
   useEffect(() => {
     if (settings) {
@@ -507,9 +517,9 @@ function App() {
 
   // Count total SVGs across all collections for search
   const totalSvgCount = useMemo(() => {
-    return allCollections.reduce((sum, c) => sum + (c.archivedAt ? 0 : c.svgs.length), 0)
+    return allCollections.reduce((sum, c) => sum + (c.archivedAt ? 0 : c.svgs.filter(s => !s.archivedAt).length), 0)
   }, [allCollections])
-  const svgCount = searchQuery.trim() ? totalSvgCount : (activeCollection?.svgs.length || 0)
+  const svgCount = searchQuery.trim() ? totalSvgCount : (activeCollection?.svgs.filter(s => !s.archivedAt).length || 0)
   const filteredCount = filteredAndSortedSvgs.length
   const currentSizeOption = CARD_SIZE_OPTIONS.find(o => o.value === cardSize) || CARD_SIZE_OPTIONS[2]
 

@@ -17,7 +17,6 @@ VERSION="${VERSION#v}"
 FULL_IMAGE="${REGISTRY}/${OWNER}/${IMAGE_NAME}"
 VERSIONED_TAG="${FULL_IMAGE}:${VERSION}"
 
-COMPOSE_FILE="$(cd "$(dirname "$0")/.." && pwd)/docker-compose.yml"
 COMPOSE_PROD_FILE="$(cd "$(dirname "$0")/.." && pwd)/docker-compose.prod.yml"
 
 echo "==> Deploying ${VERSIONED_TAG}"
@@ -38,9 +37,7 @@ docker pull "${VERSIONED_TAG}"
 # ── deploy ────────────────────────────────────────────────────────────────────
 echo "==> Starting stack"
 APP_IMAGE="${VERSIONED_TAG}" \
-  docker compose \
-    -f "${COMPOSE_FILE}" \
-    -f "${COMPOSE_PROD_FILE}" \
+  docker compose -f "${COMPOSE_PROD_FILE}" \
     up -d --force-recreate --remove-orphans
 
 echo "==> Removing dangling images"
@@ -48,4 +45,4 @@ docker image prune -f
 
 echo
 echo "Done. Running containers:"
-docker compose -f "${COMPOSE_FILE}" -f "${COMPOSE_PROD_FILE}" ps
+docker compose -f "${COMPOSE_PROD_FILE}" ps

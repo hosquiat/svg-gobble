@@ -29,8 +29,8 @@ RUN npm install
 # Copy Prisma schema
 COPY prisma ./prisma
 
-# Generate Prisma client
-RUN npx prisma generate
+# Generate both Prisma clients (SQLite default + MySQL)
+RUN npx prisma generate && npx prisma generate --schema=prisma/schema.mysql.prisma
 
 # Copy server source files
 COPY tsconfig.json ./
@@ -62,8 +62,8 @@ RUN npm install --omit=dev && \
 # Copy Prisma schema and seed
 COPY prisma ./prisma
 
-# Generate Prisma client in runtime
-RUN npx prisma generate
+# Generate both Prisma clients in runtime stage
+RUN npx prisma generate && npx prisma generate --schema=prisma/schema.mysql.prisma
 
 # Copy compiled server JavaScript from builder
 COPY --from=server-builder /app/dist ./dist

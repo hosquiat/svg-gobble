@@ -1,5 +1,6 @@
 import express, { Request, Response, NextFunction } from 'express'
 import path from 'path'
+import { readFileSync } from 'fs'
 import { extractSvgs, ExtractedSvg } from './extractor'
 import { fetchHtml, resolveExternalSvg } from './fetcher'
 import prisma from './db'
@@ -8,11 +9,22 @@ import svgsRouter from './routes/svgs'
 import settingsRouter from './routes/settings'
 import backupRouter from './routes/backup'
 import googleDriveRouter from './routes/googleDrive'
+import databaseRouter from './routes/database'
 import { startArchiveCleanupJob } from './jobs/archiveCleanup'
 import { startBackupJob } from './jobs/backupJob'
 
 const app = express()
 const PORT = process.env.PORT || 3000
+
+function getAppVersion(): string {
+  try {
+    const pkg = JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf8'))
+    return pkg.version || '0.0.0'
+  } catch {
+    return process.env.npm_package_version || '0.0.0'
+  }
+}
+const APP_VERSION = getAppVersion()
 const DEFAULT_TIMEOUT = 30000
 
 app.use(express.json({ limit: '10mb' }))
@@ -23,6 +35,7 @@ app.use('/api/svgs', svgsRouter)
 app.use('/api/settings', settingsRouter)
 app.use('/api/backup', backupRouter)
 app.use('/api/google-drive', googleDriveRouter)
+app.use('/api/database', databaseRouter)
 
 // Serve static files from client build
 const clientPath = path.join(__dirname, '../client/dist')
@@ -174,6 +187,13 @@ app.get('/health', (_req: Request, res: Response) => {
     status: 'ok',
     timestamp: new Date().toISOString(),
   })
+})
+
+/**
+ * GET /api/version - App version
+ */
+app.get('/api/version', (_req: Request, res: Response) => {
+  res.json({ version: APP_VERSION })
 })
 
 /**

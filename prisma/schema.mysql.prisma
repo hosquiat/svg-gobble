@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client-mysql"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Collection {
+  id         String       @id @default(uuid()) @db.VarChar(36)
+  name       String       @db.VarChar(255)
+  emoji      String?      @db.VarChar(10)
+  isDefault  Boolean      @default(false)
+  parentId   String?      @db.VarChar(36)
+  parent     Collection?  @relation("SubCollections", fields: [parentId], references: [id], onDelete: Cascade)
+  children   Collection[] @relation("SubCollections")
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  archivedAt DateTime?
+  svgs       Svg[]
+}
+
+model Svg {
+  id           String     @id @default(uuid()) @db.VarChar(36)
+  name         String     @db.VarChar(255)
+  svg          String     @db.LongText
+  type         String     @db.VarChar(50)
+  contentHash  String     @db.VarChar(64)
+  collectionId String     @db.VarChar(36)
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  archivedAt   DateTime?
+
+  @@index([contentHash])
+  @@index([collectionId])
+}
+
+model Settings {
+  id                   String  @id @db.VarChar(36)
+  defaultCollectionId  String? @db.VarChar(36)
+  cardSize             Int     @default(192)
+  showSizes            Boolean @default(true)
+  showNames            Boolean @default(true)
+  optimizationPreset   String  @default("default") @db.VarChar(50)
+  archiveRetentionDays Int     @default(90)
+
+  backupEnabled        Boolean @default(false)
+  backupSchedule       String  @default("0 2 * * *") @db.VarChar(100)
+  backupRetentionDays  Int     @default(30)
+  googleDriveEnabled   Boolean @default(false)
+  localBackupEnabled   Boolean @default(true)
+}
+
+model GoogleDriveAuth {
+  id           String   @id @db.VarChar(36)
+  accessToken  String   @db.Text
+  refreshToken String   @db.Text
+  tokenExpiry  DateTime
+  email        String?  @db.VarChar(255)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model GoogleDriveConfig {
+  id           String   @id @db.VarChar(36)
+  clientId     String   @db.VarChar(255)
+  clientSecret String   @db.Text
+  redirectUri  String   @db.VarChar(500)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Backup {
+  id          String   @id @default(uuid()) @db.VarChar(36)
+  filename    String   @db.VarChar(255)
+  size        Int
+  type        String   @db.VarChar(50)
+  status      String   @db.VarChar(50)
+  error       String?  @db.Text
+  driveFileId String?  @db.VarChar(255)
+  createdAt   DateTime @default(now())
+}

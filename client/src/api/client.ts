@@ -252,6 +252,69 @@ export const backupApi = {
   },
 }
 
+// Database API
+export interface DbStatus {
+  type: string
+  url: string
+  connected: boolean
+  metrics: {
+    collections: number
+    svgs: number
+    backups: number
+    sizeBytes: number | null
+  }
+}
+
+export const databaseApi = {
+  async getStatus(): Promise<{ current: DbStatus; savedConfig: { type: string; url: string } | null }> {
+    const res = await fetchApi<never>('/database/status')
+    return res as unknown as { current: DbStatus; savedConfig: { type: string; url: string } | null }
+  },
+
+  async testConnection(url: string): Promise<{ success: boolean; latencyMs?: number; error?: string }> {
+    const res = await fetch('/api/database/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    })
+    return res.json()
+  },
+
+  async migrate(from: string, to: string, mysqlUrl: string): Promise<{ success: boolean; counts?: { collections: number; svgs: number; backups: number }; error?: string }> {
+    const res = await fetch('/api/database/migrate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from, to, mysqlUrl }),
+    })
+    return res.json()
+  },
+
+  async switchDatabase(type: string, url: string): Promise<{ success: boolean; error?: string }> {
+    const res = await fetchApi<never>('/database/switch', {
+      method: 'POST',
+      body: JSON.stringify({ type, url }),
+    })
+    return res as unknown as { success: boolean; error?: string }
+  },
+
+  async restart(): Promise<void> {
+    await fetch('/api/database/restart', { method: 'POST' }).catch(() => {/* server going down */})
+  },
+}
+
+// Version API
+export const versionApi = {
+  async get(): Promise<string> {
+    try {
+      const res = await fetch('/api/version')
+      const data = await res.json()
+      return data.version || '0.0.0'
+    } catch {
+      return '0.0.0'
+    }
+  },
+}
+
 // Google Drive API
 export const googleDriveApi = {
   async getStatus(): Promise<GoogleDriveStatus> {

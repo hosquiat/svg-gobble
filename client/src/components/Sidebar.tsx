@@ -138,22 +138,166 @@ export function Sidebar({
 
   return (
     <>
-      {/* Mobile overlay */}
+      {/* Mobile dropdown backdrop — sits below the header so the hamburger stays tappable */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-x-0 top-16 bottom-0 z-40 lg:hidden"
           onClick={onClose}
         />
       )}
 
+      {/* Mobile dropdown — full-width, drops from top of screen */}
+      <div
+        className={clsx(
+          'fixed inset-x-0 top-16 z-50 lg:hidden',
+          'bg-white border-b border-gray-200 shadow-xl',
+          'max-h-[70vh] overflow-y-auto',
+          'transition-all duration-200 ease-out',
+          isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'
+        )}
+      >
+        {/* Actions row */}
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100">
+          <button
+            onClick={() => { onCreateCollection(); onClose() }}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            New collection
+          </button>
+          <div className="flex-1" />
+          <button
+            onClick={() => { onOpenSettings(); onClose() }}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Settings
+          </button>
+        </div>
+
+        {/* All SVGs */}
+        {onSelectAllView && (
+          <button
+            onClick={() => { onSelectAllView(); onClose() }}
+            className={clsx(
+              'w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors',
+              isAllViewActive
+                ? 'bg-gray-100 text-gray-900 font-medium'
+                : 'text-gray-700 hover:bg-gray-50'
+            )}
+          >
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+            </svg>
+            <span className="flex-1 text-left">All SVGs</span>
+            {totalSvgCount !== undefined && (
+              <span className={clsx(
+                'text-xs px-1.5 py-0.5 rounded-full',
+                isAllViewActive ? 'bg-white text-gray-600' : 'bg-gray-100 text-gray-500'
+              )}>
+                {totalSvgCount}
+              </span>
+            )}
+          </button>
+        )}
+
+        {/* Collections list */}
+        <ul>
+          {activeCollections.map((collection) => (
+            <li key={collection.id}>
+              <button
+                onClick={() => { onSelectCollection(collection.id); onClose() }}
+                className={clsx(
+                  'w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors',
+                  collection.id === activeCollectionId
+                    ? 'bg-gray-100 text-gray-900 font-medium'
+                    : 'text-gray-700 hover:bg-gray-50'
+                )}
+              >
+                {collection.emoji ? (
+                  <span className="flex-shrink-0">{collection.emoji}</span>
+                ) : (
+                  <svg className="w-4 h-4 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                  </svg>
+                )}
+                <span className="flex-1 text-left truncate">{collection.name}</span>
+                <span className="text-xs text-gray-400">
+                  {collection.svgs.filter(s => !s.archivedAt).length}
+                </span>
+              </button>
+              {collection.children?.filter(c => !c.archivedAt).map(child => (
+                <button
+                  key={child.id}
+                  onClick={() => { onSelectCollection(child.id); onClose() }}
+                  className={clsx(
+                    'w-full flex items-center gap-3 pl-10 pr-4 py-2.5 text-sm transition-colors',
+                    child.id === activeCollectionId
+                      ? 'bg-gray-100 text-gray-900 font-medium'
+                      : 'text-gray-600 hover:bg-gray-50'
+                  )}
+                >
+                  {child.emoji ? (
+                    <span className="flex-shrink-0 text-sm">{child.emoji}</span>
+                  ) : (
+                    <svg className="w-3.5 h-3.5 flex-shrink-0 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                    </svg>
+                  )}
+                  <span className="flex-1 text-left truncate">{child.name}</span>
+                  <span className="text-xs text-gray-400">
+                    {child.svgs.filter(s => !s.archivedAt).length}
+                  </span>
+                </button>
+              ))}
+            </li>
+          ))}
+        </ul>
+
+        {/* Archived section */}
+        {archivedCollections.length > 0 && (
+          <div className="border-t border-gray-100">
+            <button
+              onClick={() => setShowArchived(!showArchived)}
+              className="w-full flex items-center gap-2 px-4 py-3 text-sm text-gray-500 hover:bg-gray-50 transition-colors"
+            >
+              <svg
+                className={clsx('w-4 h-4 transition-transform', showArchived && 'rotate-90')}
+                fill="none" viewBox="0 0 24 24" stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+              Archived ({archivedCollections.length})
+            </button>
+            {showArchived && archivedCollections.map(collection => (
+              <div key={collection.id} className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-400">
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                </svg>
+                <span className="flex-1 truncate">{collection.name}</span>
+                <button
+                  onClick={() => onRestoreCollection(collection.id)}
+                  className="text-xs text-blue-500 hover:text-blue-700 transition-colors"
+                >
+                  Restore
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Desktop sidebar */}
       <aside
         ref={sidebarRef}
         className={clsx(
-          'bg-white border-r border-gray-200 flex flex-col h-screen flex-shrink-0 relative',
-          // Mobile: fixed overlay
-          'fixed lg:relative z-50 lg:z-auto',
-          'transition-all lg:transition-[width] duration-300',
-          isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          'hidden lg:flex bg-white border-r border-gray-200 flex-col h-screen flex-shrink-0 relative',
+          'transition-[width] duration-300',
         )}
         style={{ width: isCollapsed ? '64px' : `${width}px` }}
       >
@@ -178,16 +322,6 @@ export function Sidebar({
               <span className="font-bold text-gray-900 text-sm">SVG Gobble</span>
             )}
           </div>
-          {!isCollapsed && (
-            <button
-              onClick={onClose}
-              className="lg:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-500"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          )}
         </div>
 
       {/* New Collection Button */}
@@ -681,7 +815,7 @@ function CollectionItem({
 
           {/* SVG count */}
           <span className="text-xs text-gray-400">
-            {collection.svgs.length}
+            {collection.svgs.filter(s => !s.archivedAt).length}
           </span>
         </div>
 
@@ -790,7 +924,7 @@ interface ArchivedCollectionItemProps {
   onDelete: () => void
 }
 
-function ArchivedCollectionItem({ collection, retentionDays, onRestore, onDelete: _onDelete }: ArchivedCollectionItemProps) {
+function ArchivedCollectionItem({ collection, retentionDays, onRestore, onDelete }: ArchivedCollectionItemProps) {
   const [showContextMenu, setShowContextMenu] = useState(false)
   const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 })
 
@@ -843,6 +977,17 @@ function ArchivedCollectionItem({ collection, retentionDays, onRestore, onDelete
               className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
             >
               Restore
+            </button>
+            <button
+              onClick={() => {
+                setShowContextMenu(false)
+                if (confirm(`Permanently delete "${collection.name}"? This cannot be undone.`)) {
+                  onDelete()
+                }
+              }}
+              className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+            >
+              Delete permanently
             </button>
           </div>
         </>

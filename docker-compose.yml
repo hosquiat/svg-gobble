@@ -10,18 +10,54 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - DATABASE_URL=file:./data/svg-gobble.db
       - BACKUP_DIR=/app/backups
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI:-http://localhost:3000/api/google-drive/oauth-callback}
+      # ── Database ──────────────────────────────────────────────────────────────
+      # Set DATABASE_TYPE to "mysql" to use MySQL/MariaDB, leave unset for SQLite
+      - DATABASE_TYPE=${DATABASE_TYPE:-sqlite}
+      # SQLite (default): file path relative to /app
+      - DATABASE_URL=${DATABASE_URL:-file:./data/svg-gobble.db}
+      # MySQL/MariaDB: set these when DATABASE_TYPE=mysql
+      # DATABASE_URL=mysql://svg-gobble:password@mariadb.local.quiathome.com:3306/svg-gobble
     volumes:
       - svg-gobble-data:/app/prisma/data
       - svg-gobble-backups:/app/backups
     restart: unless-stopped
+    # Uncomment if using the local mariadb service below:
+    # depends_on:
+    #   mariadb:
+    #     condition: service_healthy
+
+  # ── Optional local MariaDB service ──────────────────────────────────────────
+  # Uncomment to run MariaDB alongside the app.
+  # Set DATABASE_TYPE=mysql and DATABASE_URL=mysql://svg-gobble:password@mariadb:3306/svg-gobble
+  #
+  # mariadb:
+  #   image: mariadb:11
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+  #     MYSQL_DATABASE: ${MYSQL_DATABASE:-svg-gobble}
+  #     MYSQL_USER: ${MYSQL_USER:-svg-gobble}
+  #     MYSQL_PASSWORD: ${MYSQL_PASSWORD:-password}
+  #   volumes:
+  #     - svg-gobble-mysql:/var/lib/mysql
+  #   ports:
+  #     - "3306:3306"
+  #   healthcheck:
+  #     test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+  #     start_period: 10s
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 3
+  #   restart: unless-stopped
 
 volumes:
   svg-gobble-data:
     driver: local
   svg-gobble-backups:
     driver: local
+  # Uncomment when using the local mariadb service:
+  # svg-gobble-mysql:
+  #   driver: local

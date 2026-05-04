@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "npx prisma db push && ts-node src/server.ts",
     "dev:client": "cd client && npm run dev",
-    "build": "npx prisma generate && tsc",
+    "build": "npx prisma generate && npx prisma generate --schema=prisma/schema.mysql.prisma && tsc",
     "build:client": "cd client && npm run build",
     "build:all": "npm run build && npm run build:client",
     "start": "node dist/server.js",
@@ -15,8 +15,12 @@
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f",
     "db:generate": "prisma generate",
+    "db:generate:mysql": "prisma generate --schema=prisma/schema.mysql.prisma",
+    "db:generate:all": "npm run db:generate && npm run db:generate:mysql",
     "db:push": "prisma db push",
-    "db:studio": "prisma studio"
+    "db:push:mysql": "prisma db push --schema=prisma/schema.mysql.prisma",
+    "db:studio": "prisma studio",
+    "db:migrate:mysql": "prisma generate --schema=prisma/schema.mysql.prisma && ts-node scripts/migrate-db.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.0.0",
