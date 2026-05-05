@@ -917,6 +917,13 @@ function App() {
                   console.error('Failed to move SVG:', error)
                 }
               }}
+              onRotateSvg={async (id, rotation) => {
+                try {
+                  await updateSvg(id, { rotation })
+                } catch (error) {
+                  console.error('Failed to rotate SVG:', error)
+                }
+              }}
               showSizes={showSizes}
               showNames={showNames}
               cardSize={cardSize}

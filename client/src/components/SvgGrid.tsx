@@ -19,6 +19,7 @@ interface SvgGridProps {
   onDuplicateSvg: (svg: ExtractedSvg) => void
   onRenameSvg: (id: string, name: string) => void
   onMoveSvg: (svgId: string, toCollectionId: string) => void
+  onRotateSvg: (id: string, rotation: number) => void
   showSizes: boolean
   showNames: boolean
   cardSize: number
@@ -37,6 +38,7 @@ export function SvgGrid({
   onDuplicateSvg,
   onRenameSvg,
   onMoveSvg,
+  onRotateSvg,
   showSizes,
   showNames,
   cardSize,
@@ -146,6 +148,7 @@ export function SvgGrid({
       onArchive={() => onArchiveSvg(svg.id)}
       onRename={(name) => onRenameSvg(svg.id, name)}
       onMove={(toCollectionId) => onMoveSvg(svg.id, toCollectionId)}
+      onRotate={(rotation) => onRotateSvg(svg.id, rotation)}
       onMenuToggle={() => setMenuOpenId(menuOpenId === svg.id ? null : svg.id)}
       onMenuClose={() => setMenuOpenId(null)}
       size={formatBytes(getSvgSize(svg))}
@@ -207,6 +210,7 @@ interface SvgCardProps {
   onArchive: () => void
   onRename: (name: string) => void
   onMove: (toCollectionId: string) => void
+  onRotate: (rotation: number) => void
   onMenuToggle: () => void
   onMenuClose: () => void
   size: string
@@ -233,6 +237,7 @@ function SvgCard({
   onArchive,
   onRename,
   onMove,
+  onRotate,
   onMenuToggle,
   onMenuClose,
   size,
@@ -414,14 +419,44 @@ function SvgCard({
 
       {/* SVG Preview - consistent square aspect ratio */}
       <div
-        className="relative cursor-pointer bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+PHJlY3Qgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjZjNmNGY2Ii8+PHJlY3QgeD0iMTAiIHk9IjEwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIGZpbGw9IiNmM2Y0ZjYiLz48L3N2Zz4=')]"
+        className="relative cursor-pointer bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+PHJlY3Qgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjZjNmNGY2Ii8+PHJlY3QgeD0iMTAiIHk9IjEwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIGZpbGw9IiNmM2Y0ZjYiLz48L3N2Zz4=')] overflow-hidden"
         style={{ aspectRatio: '1/1' }}
         onClick={onEdit}
       >
         <div
-          className="absolute inset-2 flex items-center justify-center [&>svg]:max-w-full [&>svg]:max-h-full [&>svg]:w-auto [&>svg]:h-auto"
+          className="absolute inset-2 flex items-center justify-center [&>svg]:max-w-full [&>svg]:max-h-full [&>svg]:w-auto [&>svg]:h-auto transition-transform duration-200"
+          style={{ transform: `rotate(${svg.rotation ?? 0}deg)` }}
           dangerouslySetInnerHTML={{ __html: svg.svg }}
         />
+        {/* Rotate buttons — visible on card hover */}
+        <div className="absolute bottom-1.5 inset-x-0 flex justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+          <button
+            className="pointer-events-auto p-1 rounded bg-white/90 shadow-sm hover:bg-white text-gray-600 hover:text-gray-900 transition-colors"
+            title="Rotate counter-clockwise"
+            onClick={(e) => {
+              e.stopPropagation()
+              onRotate(((svg.rotation ?? 0) - 90 + 360) % 360)
+            }}
+          >
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+              <path d="M3 3v5h5" />
+            </svg>
+          </button>
+          <button
+            className="pointer-events-auto p-1 rounded bg-white/90 shadow-sm hover:bg-white text-gray-600 hover:text-gray-900 transition-colors"
+            title="Rotate clockwise"
+            onClick={(e) => {
+              e.stopPropagation()
+              onRotate(((svg.rotation ?? 0) + 90) % 360)
+            }}
+          >
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 12a9 9 0 1 1-9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+              <path d="M21 3v5h-5" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Copy button */}

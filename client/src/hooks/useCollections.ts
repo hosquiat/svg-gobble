@@ -13,7 +13,7 @@ interface UseCollectionsReturn {
   archiveCollection: (id: string) => Promise<void>
   restoreCollection: (id: string) => Promise<void>
   addSvgs: (collectionId: string, svgs: Array<{ name: string; svg: string; type: string }>) => Promise<ExtractedSvg[]>
-  updateSvg: (id: string, data: { name?: string; svg?: string; collectionId?: string }) => Promise<void>
+  updateSvg: (id: string, data: { name?: string; svg?: string; collectionId?: string; rotation?: number }) => Promise<void>
   deleteSvg: (id: string) => Promise<void>
   archiveSvg: (id: string) => Promise<void>
   restoreSvg: (id: string) => Promise<void>
@@ -94,7 +94,7 @@ export function useCollections(): UseCollectionsReturn {
     return result
   }, [refetch])
 
-  const updateSvg = useCallback(async (id: string, data: { name?: string; svg?: string; collectionId?: string }) => {
+  const updateSvg = useCallback(async (id: string, data: { name?: string; svg?: string; collectionId?: string; rotation?: number }) => {
     await svgsApi.update(id, data)
     await refetch()
   }, [refetch])

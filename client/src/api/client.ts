@@ -109,7 +109,7 @@ export const collectionsApi = {
 export const svgsApi = {
   async update(
     id: string,
-    data: { name?: string; svg?: string; collectionId?: string }
+    data: { name?: string; svg?: string; collectionId?: string; rotation?: number }
   ): Promise<ExtractedSvg> {
     const res = await fetchApi<ExtractedSvg>(`/svgs/${id}`, {
       method: 'PUT',

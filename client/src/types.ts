@@ -5,6 +5,7 @@ export interface ExtractedSvg {
   type: 'inline' | 'external' | 'uploaded'
   contentHash?: string
   collectionId?: string
+  rotation?: number
   createdAt?: string
   updatedAt?: string
   archivedAt?: string | null

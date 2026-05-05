@@ -14,7 +14,7 @@ interface IdParams {
 router.put('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params
-    const { name, svg, collectionId } = req.body
+    const { name, svg, collectionId, rotation } = req.body
 
     const existing = await prisma.svg.findUnique({ where: { id } })
     if (!existing) {
@@ -36,6 +36,7 @@ router.put('/:id', async (req: Request<IdParams>, res: Response) => {
         svg: svg ?? existing.svg,
         contentHash: svg ? hashSvgContent(svg) : existing.contentHash,
         collectionId: collectionId ?? existing.collectionId,
+        rotation: rotation !== undefined ? rotation : existing.rotation,
       },
     })
 

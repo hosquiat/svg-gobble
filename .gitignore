@@ -7,3 +7,4 @@ dist/
 prisma/data/*.db
 prisma/data/*.db-journal
 backup.json
+prisma/prisma/data/svg-gobble.db
