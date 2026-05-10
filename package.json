@@ -14,6 +14,7 @@
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f",
+    "docker:dev": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up",
     "db:generate": "prisma generate",
     "db:generate:mysql": "prisma generate --schema=prisma/schema.mysql.prisma",
     "db:generate:all": "npm run db:generate && npm run db:generate:mysql",

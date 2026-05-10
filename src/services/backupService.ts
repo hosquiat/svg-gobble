@@ -1,5 +1,6 @@
 import fs from 'fs'
 import path from 'path'
+import crypto from 'crypto'
 import prisma from '../db'
 import type { Backup } from '@prisma/client'
 
@@ -12,7 +13,6 @@ export interface BackupData {
     id: string
     name: string
     emoji: string | null
-    isDefault: boolean
     parentId: string | null
     createdAt: string
     updatedAt: string
@@ -29,7 +29,6 @@ export interface BackupData {
   }>
   settings: {
     id: string
-    defaultCollectionId: string | null
     cardSize: number
     showSizes: boolean
     showNames: boolean
@@ -56,7 +55,7 @@ function ensureBackupDir(): void {
  * @param returnData - If true, returns the backup data instead of writing to file
  * @returns The created backup record or backup data
  */
-export async function createBackup(returnData?: boolean): Promise<{ backup?: Backup; data?: BackupData; filePath?: string }> {
+export async function createBackup(returnData?: boolean): Promise<{ backup?: Backup; data?: BackupData; filePath?: string; skipped?: boolean }> {
   const collections = await prisma.collection.findMany({
     include: {
       svgs: true,
@@ -74,7 +73,6 @@ export async function createBackup(returnData?: boolean): Promise<{ backup?: Bac
       id: c.id,
       name: c.name,
       emoji: c.emoji,
-      isDefault: c.isDefault,
       parentId: c.parentId,
       createdAt: c.createdAt.toISOString(),
       updatedAt: c.updatedAt.toISOString(),
@@ -92,7 +90,6 @@ export async function createBackup(returnData?: boolean): Promise<{ backup?: Bac
     settings: settings
       ? {
           id: settings.id,
-          defaultCollectionId: settings.defaultCollectionId,
           cardSize: settings.cardSize,
           showSizes: settings.showSizes,
           showNames: settings.showNames,
@@ -108,6 +105,20 @@ export async function createBackup(returnData?: boolean): Promise<{ backup?: Bac
 
   if (returnData) {
     return { data: backupData }
+  }
+
+  // Hash the data content (excluding the timestamp which always differs)
+  const hashable = JSON.stringify({ collections: backupData.collections, settings: backupData.settings })
+  const contentHash = crypto.createHash('sha256').update(hashable).digest('hex')
+
+  // Skip if content hasn't changed since the last backup
+  const lastBackup = await prisma.backup.findFirst({
+    where: { type: 'local', status: 'completed' },
+    orderBy: { createdAt: 'desc' },
+  })
+  if (lastBackup?.contentHash === contentHash) {
+    console.log('[Backup] No changes since last backup, skipping.')
+    return { skipped: true }
   }
 
   ensureBackupDir()
@@ -127,6 +138,7 @@ export async function createBackup(returnData?: boolean): Promise<{ backup?: Bac
       size,
       type: 'local',
       status: 'completed',
+      contentHash,
     },
   })
 
@@ -172,7 +184,6 @@ export async function restoreBackup(filename?: string, data?: BackupData): Promi
           id: collection.id,
           name: collection.name,
           emoji: collection.emoji,
-          isDefault: collection.isDefault,
           parentId: null, // Set later to handle ordering
           createdAt: new Date(collection.createdAt),
           updatedAt: new Date(collection.updatedAt),
@@ -214,7 +225,6 @@ export async function restoreBackup(filename?: string, data?: BackupData): Promi
       await tx.settings.upsert({
         where: { id: 'singleton' },
         update: {
-          defaultCollectionId: backupData.settings.defaultCollectionId,
           cardSize: backupData.settings.cardSize,
           showSizes: backupData.settings.showSizes,
           showNames: backupData.settings.showNames,
@@ -222,7 +232,6 @@ export async function restoreBackup(filename?: string, data?: BackupData): Promi
         },
         create: {
           id: 'singleton',
-          defaultCollectionId: backupData.settings.defaultCollectionId,
           cardSize: backupData.settings.cardSize,
           showSizes: backupData.settings.showSizes,
           showNames: backupData.settings.showNames,

@@ -1,17 +1,27 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
-import clsx from 'clsx'
-import type { Collection } from '../types'
+import { useState, useMemo, useCallback, useEffect, useRef } from "react"
+import clsx from "clsx"
+import type { Collection } from "../types"
+
+function countSvgsDeep(collection: Collection): number {
+  const direct = collection.svgs.filter((s) => !s.archivedAt).length
+  return (
+    direct +
+    (collection.children ?? [])
+      .filter((c) => !c.archivedAt)
+      .reduce((sum, child) => sum + countSvgsDeep(child), 0)
+  )
+}
 
 // Collection color palette - parent colors
 const COLLECTION_COLORS = [
-  { primary: 'text-red-500', secondary: 'text-red-300' },
-  { primary: 'text-blue-500', secondary: 'text-blue-300' },
-  { primary: 'text-green-500', secondary: 'text-green-300' },
-  { primary: 'text-purple-500', secondary: 'text-purple-300' },
-  { primary: 'text-orange-500', secondary: 'text-orange-300' },
-  { primary: 'text-pink-500', secondary: 'text-pink-300' },
-  { primary: 'text-teal-500', secondary: 'text-teal-300' },
-  { primary: 'text-indigo-500', secondary: 'text-indigo-300' },
+  { primary: "text-red-500", secondary: "text-red-300" },
+  { primary: "text-blue-500", secondary: "text-blue-300" },
+  { primary: "text-green-500", secondary: "text-green-300" },
+  { primary: "text-purple-500", secondary: "text-purple-300" },
+  { primary: "text-orange-500", secondary: "text-orange-300" },
+  { primary: "text-pink-500", secondary: "text-pink-300" },
+  { primary: "text-teal-500", secondary: "text-teal-300" },
+  { primary: "text-indigo-500", secondary: "text-indigo-300" },
 ]
 
 interface SidebarProps {
@@ -88,17 +98,17 @@ export function Sidebar({
     }
 
     if (isResizing) {
-      document.addEventListener('mousemove', handleMouseMove)
-      document.addEventListener('mouseup', handleMouseUp)
-      document.body.style.cursor = 'col-resize'
-      document.body.style.userSelect = 'none'
+      document.addEventListener("mousemove", handleMouseMove)
+      document.addEventListener("mouseup", handleMouseUp)
+      document.body.style.cursor = "col-resize"
+      document.body.style.userSelect = "none"
     }
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleMouseUp)
-      document.body.style.cursor = ''
-      document.body.style.userSelect = ''
+      document.removeEventListener("mousemove", handleMouseMove)
+      document.removeEventListener("mouseup", handleMouseUp)
+      document.body.style.cursor = ""
+      document.body.style.userSelect = ""
     }
   }, [isResizing, onWidthChange])
 
@@ -121,11 +131,14 @@ export function Sidebar({
     }
 
     categorize(collections)
-    return { activeCollections: collections.filter(c => !c.archivedAt), archivedCollections: archived }
+    return {
+      activeCollections: collections.filter((c) => !c.archivedAt),
+      archivedCollections: archived,
+    }
   }, [collections])
 
   const toggleExpand = (id: string) => {
-    setExpandedIds(prev => {
+    setExpandedIds((prev) => {
       const next = new Set(prev)
       if (next.has(id)) {
         next.delete(id)
@@ -149,32 +162,65 @@ export function Sidebar({
       {/* Mobile dropdown — full-width, drops from top of screen */}
       <div
         className={clsx(
-          'fixed inset-x-0 top-16 z-50 lg:hidden',
-          'bg-white border-b border-gray-200 shadow-xl',
-          'max-h-[70vh] overflow-y-auto',
-          'transition-all duration-200 ease-out',
-          isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'
+          "fixed inset-x-0 top-16 z-50 lg:hidden",
+          "bg-white border-b border-gray-200 shadow-xl",
+          "max-h-[70vh] overflow-y-auto",
+          "transition-all duration-200 ease-out",
+          isOpen
+            ? "opacity-100 translate-y-0"
+            : "opacity-0 -translate-y-2 pointer-events-none",
         )}
       >
         {/* Actions row */}
         <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100">
           <button
-            onClick={() => { onCreateCollection(); onClose() }}
+            onClick={() => {
+              onCreateCollection()
+              onClose()
+            }}
             className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
             </svg>
             New collection
           </button>
           <div className="flex-1" />
           <button
-            onClick={() => { onOpenSettings(); onClose() }}
+            onClick={() => {
+              onOpenSettings()
+              onClose()
+            }}
             className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              />
             </svg>
             Settings
           </button>
@@ -183,23 +229,40 @@ export function Sidebar({
         {/* All SVGs */}
         {onSelectAllView && (
           <button
-            onClick={() => { onSelectAllView(); onClose() }}
+            onClick={() => {
+              onSelectAllView()
+              onClose()
+            }}
             className={clsx(
-              'w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors',
+              "w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors",
               isAllViewActive
-                ? 'bg-gray-100 text-gray-900 font-medium'
-                : 'text-gray-700 hover:bg-gray-50'
+                ? "bg-gray-100 text-gray-900 font-medium"
+                : "text-gray-700 hover:bg-gray-50",
             )}
           >
-            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+            <svg
+              className="w-4 h-4 flex-shrink-0"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+              />
             </svg>
-            <span className="flex-1 text-left">All SVGs</span>
+            <span className="flex-1 text-left">Show All SVGs</span>
             {totalSvgCount !== undefined && (
-              <span className={clsx(
-                'text-xs px-1.5 py-0.5 rounded-full',
-                isAllViewActive ? 'bg-white text-gray-600' : 'bg-gray-100 text-gray-500'
-              )}>
+              <span
+                className={clsx(
+                  "text-xs px-1.5 py-0.5 rounded-full",
+                  isAllViewActive
+                    ? "bg-white text-gray-600"
+                    : "bg-gray-100 text-gray-500",
+                )}
+              >
                 {totalSvgCount}
               </span>
             )}
@@ -211,50 +274,84 @@ export function Sidebar({
           {activeCollections.map((collection) => (
             <li key={collection.id}>
               <button
-                onClick={() => { onSelectCollection(collection.id); onClose() }}
+                onClick={() => {
+                  onSelectCollection(collection.id)
+                  onClose()
+                }}
                 className={clsx(
-                  'w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors',
+                  "w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors",
                   collection.id === activeCollectionId
-                    ? 'bg-gray-100 text-gray-900 font-medium'
-                    : 'text-gray-700 hover:bg-gray-50'
+                    ? "bg-gray-100 text-gray-900 font-medium"
+                    : "text-gray-700 hover:bg-gray-50",
                 )}
               >
                 {collection.emoji ? (
                   <span className="flex-shrink-0">{collection.emoji}</span>
                 ) : (
-                  <svg className="w-4 h-4 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                  <svg
+                    className="w-4 h-4 flex-shrink-0 text-gray-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                    />
                   </svg>
                 )}
-                <span className="flex-1 text-left truncate">{collection.name}</span>
+                <span className="flex-1 text-left truncate">
+                  {collection.name}
+                </span>
                 <span className="text-xs text-gray-400">
-                  {collection.svgs.filter(s => !s.archivedAt).length}
+                  {countSvgsDeep(collection)}
                 </span>
               </button>
-              {collection.children?.filter(c => !c.archivedAt).map(child => (
-                <button
-                  key={child.id}
-                  onClick={() => { onSelectCollection(child.id); onClose() }}
-                  className={clsx(
-                    'w-full flex items-center gap-3 pl-10 pr-4 py-2.5 text-sm transition-colors',
-                    child.id === activeCollectionId
-                      ? 'bg-gray-100 text-gray-900 font-medium'
-                      : 'text-gray-600 hover:bg-gray-50'
-                  )}
-                >
-                  {child.emoji ? (
-                    <span className="flex-shrink-0 text-sm">{child.emoji}</span>
-                  ) : (
-                    <svg className="w-3.5 h-3.5 flex-shrink-0 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                    </svg>
-                  )}
-                  <span className="flex-1 text-left truncate">{child.name}</span>
-                  <span className="text-xs text-gray-400">
-                    {child.svgs.filter(s => !s.archivedAt).length}
-                  </span>
-                </button>
-              ))}
+              {collection.children
+                ?.filter((c) => !c.archivedAt)
+                .map((child) => (
+                  <button
+                    key={child.id}
+                    onClick={() => {
+                      onSelectCollection(child.id)
+                      onClose()
+                    }}
+                    className={clsx(
+                      "w-full flex items-center gap-3 pl-10 pr-4 py-2.5 text-sm transition-colors",
+                      child.id === activeCollectionId
+                        ? "bg-gray-100 text-gray-900 font-medium"
+                        : "text-gray-600 hover:bg-gray-50",
+                    )}
+                  >
+                    {child.emoji ? (
+                      <span className="flex-shrink-0 text-sm">
+                        {child.emoji}
+                      </span>
+                    ) : (
+                      <svg
+                        className="w-3.5 h-3.5 flex-shrink-0 text-gray-300"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                        />
+                      </svg>
+                    )}
+                    <span className="flex-1 text-left truncate">
+                      {child.name}
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      {child.svgs.filter((s) => !s.archivedAt).length}
+                    </span>
+                  </button>
+                ))}
             </li>
           ))}
         </ul>
@@ -267,27 +364,51 @@ export function Sidebar({
               className="w-full flex items-center gap-2 px-4 py-3 text-sm text-gray-500 hover:bg-gray-50 transition-colors"
             >
               <svg
-                className={clsx('w-4 h-4 transition-transform', showArchived && 'rotate-90')}
-                fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                className={clsx(
+                  "w-4 h-4 transition-transform",
+                  showArchived && "rotate-90",
+                )}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
               </svg>
               Archived ({archivedCollections.length})
             </button>
-            {showArchived && archivedCollections.map(collection => (
-              <div key={collection.id} className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-400">
-                <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                </svg>
-                <span className="flex-1 truncate">{collection.name}</span>
-                <button
-                  onClick={() => onRestoreCollection(collection.id)}
-                  className="text-xs text-blue-500 hover:text-blue-700 transition-colors"
+            {showArchived &&
+              archivedCollections.map((collection) => (
+                <div
+                  key={collection.id}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-400"
                 >
-                  Restore
-                </button>
-              </div>
-            ))}
+                  <svg
+                    className="w-4 h-4 flex-shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
+                    />
+                  </svg>
+                  <span className="flex-1 truncate">{collection.name}</span>
+                  <button
+                    onClick={() => onRestoreCollection(collection.id)}
+                    className="text-xs text-blue-500 hover:text-blue-700 transition-colors"
+                  >
+                    Restore
+                  </button>
+                </div>
+              ))}
           </div>
         )}
       </div>
@@ -296,288 +417,375 @@ export function Sidebar({
       <aside
         ref={sidebarRef}
         className={clsx(
-          'hidden lg:flex bg-white border-r border-gray-200 flex-col h-screen flex-shrink-0 relative',
-          'transition-[width] duration-300',
+          "hidden lg:flex bg-white border-r border-gray-200 flex-col h-screen flex-shrink-0 relative",
+          "transition-[width] duration-300",
         )}
-        style={{ width: isCollapsed ? '64px' : `${width}px` }}
+        style={{ width: isCollapsed ? "64px" : `${width}px` }}
       >
         {/* Logo */}
-        <div className={clsx('p-4 flex items-center', isCollapsed ? 'justify-center' : 'justify-between')}>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {/* SVG Gobble Logo - Cute hungry creature */}
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center flex-shrink-0 shadow-sm">
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
-                {/* Body - round creature */}
-                <circle cx="12" cy="12" r="9" fill="white"/>
-                {/* Open mouth - chomping */}
-                <path d="M12 12L21 7V17L12 12Z" fill="#ef4444"/>
-                {/* Eye */}
-                <circle cx="9" cy="9" r="2.5" fill="#1f2937"/>
-                <circle cx="9.7" cy="8.3" r="0.8" fill="white"/>
-                {/* Happy eyebrow */}
-                <path d="M6 6.5C7 5.5 8.5 5.5 10 6" stroke="#1f2937" strokeWidth="1" strokeLinecap="round"/>
-              </svg>
-            </div>
-            {!isCollapsed && (
-              <span className="font-bold text-gray-900 text-sm">SVG Gobble</span>
+        <div
+          className={clsx(
+            "p-4 flex items-center",
+            isCollapsed ? "justify-center" : "justify-between",
+          )}
+        >
+          <div className="flex items-center w-full">
+            {isCollapsed ? (
+              <img src="/icon.svg" alt="SVG Gobble" className="w-8 h-8" />
+            ) : (
+              <img src="/logo.svg" alt="SVG Gobble" className="h-7 w-full object-contain object-left" />
             )}
           </div>
         </div>
 
-      {/* New Collection Button */}
-      <div className={clsx('mb-1', isCollapsed ? 'px-2' : 'px-3')}>
-        <button
-          onClick={onCreateCollection}
-          className={clsx(
-            'flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors',
-            isCollapsed
-              ? 'w-10 h-10 justify-center rounded-lg hover:bg-gray-100'
-              : 'w-full gap-2 px-3 py-2'
-          )}
-          title={isCollapsed ? 'New collection' : undefined}
-        >
-          <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          {!isCollapsed && <span>New collection</span>}
-        </button>
-      </div>
-
-      {/* All SVGs View Button */}
-      {onSelectAllView && (
-        <div className={clsx('mb-2', isCollapsed ? 'px-2' : 'px-3')}>
-          <button
-            onClick={onSelectAllView}
-            className={clsx(
-              'flex items-center text-sm transition-colors',
-              isCollapsed
-                ? 'w-10 h-10 justify-center rounded-lg'
-                : 'w-full gap-2 px-3 py-2 rounded-lg',
-              isAllViewActive
-                ? 'bg-gray-100 text-gray-900'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-            )}
-            title={isCollapsed ? 'All SVGs' : undefined}
-          >
-            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-            </svg>
-            {!isCollapsed && (
-              <>
-                <span className="flex-1 text-left">All SVGs</span>
-                {totalSvgCount !== undefined && (
-                  <span className={clsx(
-                    'text-xs px-1.5 py-0.5 rounded-full',
-                    isAllViewActive ? 'bg-white text-gray-600' : 'bg-gray-100 text-gray-500'
-                  )}>
-                    {totalSvgCount}
-                  </span>
-                )}
-              </>
-            )}
-          </button>
-        </div>
-      )}
-
-      {/* Collections List */}
-      <div className={clsx('flex-1 overflow-y-auto', isCollapsed ? 'px-2' : 'px-3')}>
-        {/* Collapsed view - just icons */}
-        {isCollapsed ? (
-          <div className="space-y-1">
-            {activeCollections.map((collection, index) => (
-              <button
-                key={collection.id}
-                onClick={() => onSelectCollection(collection.id)}
-                className={clsx(
-                  'w-10 h-10 rounded-lg flex items-center justify-center transition-colors',
-                  collection.id === activeCollectionId
-                    ? 'bg-gray-100 text-gray-900'
-                    : 'text-gray-600 hover:bg-gray-50'
-                )}
-                title={collection.name}
+        {/* All SVGs View Button */}
+        {onSelectAllView && (
+          <div className={clsx("mb-2", isCollapsed ? "px-2 mx-auto" : "px-3")}>
+            <button
+              onClick={onSelectAllView}
+              className={clsx(
+                "flex items-center text-sm transition-colors",
+                isCollapsed
+                  ? "w-10 h-10 justify-center rounded-lg"
+                  : "w-full gap-2 px-3 py-2 rounded-lg",
+                isAllViewActive
+                  ? "bg-gray-100 text-gray-900"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-50",
+              )}
+              title={isCollapsed ? "Show All SVGs" : undefined}
+            >
+              <svg
+                className="w-4 h-4 flex-shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
               >
-                {collection.emoji ? (
-                  <span className="text-lg">{collection.emoji}</span>
-                ) : (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+                />
+              </svg>
+              {!isCollapsed && (
+                <>
+                  <span className="flex-1 text-left">Show All SVGs</span>
+                  {totalSvgCount !== undefined && (
+                    <span
+                      className={clsx(
+                        "text-xs px-1.5 py-0.5 rounded-full",
+                        isAllViewActive
+                          ? "bg-white text-gray-600"
+                          : "bg-gray-100 text-gray-500",
+                      )}
+                    >
+                      {totalSvgCount}
+                    </span>
+                  )}
+                </>
+              )}
+            </button>
+          </div>
+        )}
+
+        {/* Collections List */}
+        <div
+          className={clsx(
+            "flex-1 overflow-y-auto",
+            isCollapsed ? "px-2 mx-auto" : "px-3",
+          )}
+        >
+          {/* Collapsed view - just icons */}
+          {isCollapsed ? (
+            <div className="space-y-1">
+              {activeCollections.map((collection, index) => (
+                <button
+                  key={collection.id}
+                  onClick={() => onSelectCollection(collection.id)}
+                  className={clsx(
+                    "w-10 h-10 rounded-lg flex items-center justify-center transition-colors",
+                    collection.id === activeCollectionId
+                      ? "bg-gray-100 text-gray-900"
+                      : "text-gray-600 hover:bg-gray-50",
+                  )}
+                  title={collection.name}
+                >
+                  {collection.emoji ? (
+                    <span className="text-lg">{collection.emoji}</span>
+                  ) : (
+                    <svg
+                      className={clsx(
+                        "w-5 h-5",
+                        COLLECTION_COLORS[index % COLLECTION_COLORS.length]
+                          .primary,
+                      )}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                      />
+                    </svg>
+                  )}
+                </button>
+              ))}
+              {/* Archived indicator when collapsed */}
+              {archivedCollections.length > 0 && (
+                <button
+                  onClick={() => {
+                    onToggleCollapse()
+                    setShowArchived(true)
+                  }}
+                  className="w-10 h-10 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-50 transition-colors"
+                  title={`Archived (${archivedCollections.length})`}
+                >
                   <svg
-                    className={clsx('w-5 h-5', COLLECTION_COLORS[index % COLLECTION_COLORS.length].primary)}
+                    className="w-5 h-5"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
+                    />
                   </svg>
-                )}
-              </button>
-            ))}
-            {/* Archived indicator when collapsed */}
-            {archivedCollections.length > 0 && (
-              <button
-                onClick={() => {
-                  onToggleCollapse()
-                  setShowArchived(true)
-                }}
-                className="w-10 h-10 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-50 transition-colors"
-                title={`Archived (${archivedCollections.length})`}
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                </svg>
-              </button>
-            )}
-          </div>
-        ) : (
-          <>
-            {/* Root drop zone - move collection to root level */}
-            {draggedId && (
-              <div
-                className={clsx(
-                  'mb-2 border-2 border-dashed rounded-lg transition-all py-2 px-3 text-center text-sm',
-                  dropTargetId === 'root'
-                    ? 'border-red-500 bg-red-50 text-red-600'
-                    : 'border-gray-300 text-gray-400'
-                )}
-                onDragOver={(e) => {
-                  e.preventDefault()
-                  setDropTargetId('root')
-                }}
-                onDragLeave={() => setDropTargetId(null)}
-                onDrop={(e) => {
-                  e.preventDefault()
-                  const id = e.dataTransfer.getData('text/plain')
-                  if (id) {
-                    onMoveCollection(id, null)
-                  }
-                  setDraggedId(null)
-                  setDropTargetId(null)
-                }}
-              >
-                Move to root level
-              </div>
-            )}
-
-            <ul className="space-y-1">
-              {activeCollections.map((collection, index) => (
-                <CollectionItem
-                  key={collection.id}
-                  collection={collection}
-                  isActive={collection.id === activeCollectionId}
-                  isExpanded={expandedIds.has(collection.id)}
-                  activeCollectionId={activeCollectionId}
-                  onSelect={() => onSelectCollection(collection.id)}
-                  onDelete={() => onDeleteCollection(collection.id)}
-                  onRename={(name) => onRenameCollection(collection.id, name)}
-                  onArchive={() => onArchiveCollection(collection.id)}
-                  onCreateSub={() => onCreateSubCollection(collection.id)}
-                  onToggleExpand={() => toggleExpand(collection.id)}
-                  expandedIds={expandedIds}
-                  onSelectChild={onSelectCollection}
-                  onDeleteChild={onDeleteCollection}
-                  onRenameChild={onRenameCollection}
-                  onArchiveChild={onArchiveCollection}
-                  onCreateSubChild={onCreateSubCollection}
-                  onToggleExpandChild={toggleExpand}
-                  onMoveCollection={onMoveCollection}
-                  onMoveSvgToCollection={onMoveSvgToCollection}
-                  depth={0}
-                  colorIndex={index % COLLECTION_COLORS.length}
-                  draggedId={draggedId}
-                  onDragStart={setDraggedId}
-                  onDragEnd={() => {
+                </button>
+              )}
+            </div>
+          ) : (
+            <>
+              {/* Root drop zone - move collection to root level */}
+              {draggedId && (
+                <div
+                  className={clsx(
+                    "mb-2 border-2 border-dashed rounded-lg transition-all py-2 px-3 text-center text-sm",
+                    dropTargetId === "root"
+                      ? "border-red-500 bg-red-50 text-red-600"
+                      : "border-gray-300 text-gray-400",
+                  )}
+                  onDragOver={(e) => {
+                    e.preventDefault()
+                    setDropTargetId("root")
+                  }}
+                  onDragLeave={() => setDropTargetId(null)}
+                  onDrop={(e) => {
+                    e.preventDefault()
+                    const id = e.dataTransfer.getData("text/plain")
+                    if (id) {
+                      onMoveCollection(id, null)
+                    }
                     setDraggedId(null)
                     setDropTargetId(null)
                   }}
-                  dropTargetId={dropTargetId}
-                  onDropTargetChange={setDropTargetId}
-                />
-              ))}
-            </ul>
-
-            {/* Archived Section */}
-            {archivedCollections.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <button
-                  onClick={() => setShowArchived(!showArchived)}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
                 >
-                  <svg
-                    className={clsx('w-4 h-4 transition-transform', showArchived && 'rotate-90')}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+                  Move to root level
+                </div>
+              )}
+
+              <ul className="space-y-1">
+                {activeCollections.map((collection, index) => (
+                  <CollectionItem
+                    key={collection.id}
+                    collection={collection}
+                    isActive={collection.id === activeCollectionId}
+                    isExpanded={expandedIds.has(collection.id)}
+                    activeCollectionId={activeCollectionId}
+                    onSelect={() => onSelectCollection(collection.id)}
+                    onDelete={() => onDeleteCollection(collection.id)}
+                    onRename={(name) => onRenameCollection(collection.id, name)}
+                    onArchive={() => onArchiveCollection(collection.id)}
+                    onCreateSub={() => onCreateSubCollection(collection.id)}
+                    onToggleExpand={() => toggleExpand(collection.id)}
+                    expandedIds={expandedIds}
+                    onSelectChild={onSelectCollection}
+                    onDeleteChild={onDeleteCollection}
+                    onRenameChild={onRenameCollection}
+                    onArchiveChild={onArchiveCollection}
+                    onCreateSubChild={onCreateSubCollection}
+                    onToggleExpandChild={toggleExpand}
+                    onMoveCollection={onMoveCollection}
+                    onMoveSvgToCollection={onMoveSvgToCollection}
+                    depth={0}
+                    colorIndex={index % COLLECTION_COLORS.length}
+                    draggedId={draggedId}
+                    onDragStart={setDraggedId}
+                    onDragEnd={() => {
+                      setDraggedId(null)
+                      setDropTargetId(null)
+                    }}
+                    dropTargetId={dropTargetId}
+                    onDropTargetChange={setDropTargetId}
+                  />
+                ))}
+              </ul>
+
+              {/* Archived Section */}
+              {archivedCollections.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <button
+                    onClick={() => setShowArchived(!showArchived)}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                  Archived ({archivedCollections.length})
-                </button>
-                {showArchived && (
-                  <ul className="mt-1 space-y-1">
-                    {archivedCollections.map((collection) => (
-                      <ArchivedCollectionItem
-                        key={collection.id}
-                        collection={collection}
-                        retentionDays={archiveRetentionDays}
-                        onRestore={() => onRestoreCollection(collection.id)}
-                        onDelete={() => onDeleteCollection(collection.id)}
+                    <svg
+                      className={clsx(
+                        "w-4 h-4 transition-transform",
+                        showArchived && "rotate-90",
+                      )}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
                       />
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
-      {/* Footer */}
-      <div className={clsx('border-t border-gray-200', isCollapsed ? 'p-2 space-y-1' : 'p-3 space-y-1')}>
-        <button
-          onClick={onOpenSettings}
-          className={clsx(
-            'flex items-center text-gray-600 hover:text-gray-900 transition-colors rounded-lg hover:bg-gray-100',
-            isCollapsed
-              ? 'w-10 h-10 justify-center'
-              : 'w-full gap-2 px-3 py-2 text-sm'
+                    </svg>
+                    Archived ({archivedCollections.length})
+                  </button>
+                  {showArchived && (
+                    <ul className="mt-1 space-y-1">
+                      {archivedCollections.map((collection) => (
+                        <ArchivedCollectionItem
+                          key={collection.id}
+                          collection={collection}
+                          retentionDays={archiveRetentionDays}
+                          onRestore={() => onRestoreCollection(collection.id)}
+                          onDelete={() => onDeleteCollection(collection.id)}
+                        />
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </>
           )}
-          title={isCollapsed ? 'Settings' : undefined}
-        >
-          <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-          {!isCollapsed && <span>Settings</span>}
-        </button>
-
-        {/* Collapse toggle button */}
-        <button
-          onClick={onToggleCollapse}
-          className={clsx(
-            'hidden lg:flex items-center text-gray-400 hover:text-gray-600 transition-colors rounded-lg hover:bg-gray-100',
-            isCollapsed
-              ? 'w-10 h-10 justify-center'
-              : 'w-full gap-2 px-3 py-2 text-sm'
-          )}
-          title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        >
-          <svg className={clsx('w-4 h-4 flex-shrink-0 transition-transform', isCollapsed && 'rotate-180')} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-          </svg>
-          {!isCollapsed && <span>Collapse</span>}
-        </button>
-      </div>
-
-      {/* Resize handle - hidden on mobile and when collapsed */}
-      {!isCollapsed && (
-        <div
-          className="hidden lg:block absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-red-500/50 transition-colors group"
-          onMouseDown={handleMouseDown}
-        >
-          <div className="absolute top-1/2 right-0 -translate-y-1/2 w-4 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-            <div className="w-1 h-6 bg-gray-300 rounded-full" />
-          </div>
         </div>
-      )}
-    </aside>
+
+        {/* Footer */}
+        <div
+          className={clsx(
+            "border-t border-gray-200",
+            isCollapsed ? "p-2 space-y-1 mx-auto" : "p-3 space-y-1",
+          )}
+        >
+          {/* New Collection Button */}
+          <div className={clsx(
+              "flex items-center text-gray;-600 hover:text-gray-900 transition-colors rounded-lg hover:bg-gray-100",
+              isCollapsed
+                ? "w-10 h-10 justify-center"
+                : "w-full gap-2 px-3 py-2 text-sm",
+            )}>
+            <button
+              onClick={onCreateCollection}
+              className={clsx(
+                "flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors",
+                isCollapsed
+                  ? "w-10 h-10 justify-center rounded-lg hover:bg-gray-100"
+                  : "w-full gap-2",
+              )}
+              title={isCollapsed ? "New collection" : undefined}
+            >
+              <svg
+                className="w-4 h-4 flex-shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              {!isCollapsed && <span>New collection</span>}
+            </button>
+          </div>
+
+          <button
+            onClick={onOpenSettings}
+            className={clsx(
+              "flex items-center text-gray-600 hover:text-gray-900 transition-colors rounded-lg hover:bg-gray-100",
+              isCollapsed
+                ? "w-10 h-10 justify-center"
+                : "w-full gap-2 px-3 py-2 text-sm",
+            )}
+            title={isCollapsed ? "Settings" : undefined}
+          >
+            <svg
+              className="w-4 h-4 flex-shrink-0"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+            </svg>
+            {!isCollapsed && <span>Settings</span>}
+          </button>
+
+          {/* Collapse toggle button */}
+          <button
+            onClick={onToggleCollapse}
+            className={clsx(
+              "hidden lg:flex items-center text-gray-400 hover:text-gray-600 transition-colors rounded-lg hover:bg-gray-100",
+              isCollapsed
+                ? "w-10 h-10 justify-center"
+                : "w-full gap-2 px-3 py-2 text-sm",
+            )}
+            title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            <svg
+              className={clsx(
+                "w-4 h-4 flex-shrink-0 transition-transform",
+                isCollapsed && "rotate-180",
+              )}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
+              />
+            </svg>
+            {!isCollapsed && <span>Collapse</span>}
+          </button>
+        </div>
+
+        {/* Resize handle - hidden on mobile and when collapsed */}
+        {!isCollapsed && (
+          <div
+            className="hidden lg:block absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-red-500/50 transition-colors group"
+            onMouseDown={handleMouseDown}
+          >
+            <div className="absolute top-1/2 right-0 -translate-y-1/2 w-4 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="w-1 h-6 bg-gray-300 rounded-full" />
+            </div>
+          </div>
+        )}
+      </aside>
     </>
   )
 }
@@ -645,8 +853,10 @@ function CollectionItem({
   const isDragOver = dropTargetId === collection.id
   const isBeingDragged = draggedId === collection.id
 
-  const hasChildren = collection.children && collection.children.filter(c => !c.archivedAt).length > 0
-  const activeChildren = collection.children?.filter(c => !c.archivedAt) || []
+  const hasChildren =
+    collection.children &&
+    collection.children.filter((c) => !c.archivedAt).length > 0
+  const activeChildren = collection.children?.filter((c) => !c.archivedAt) || []
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -661,13 +871,9 @@ function CollectionItem({
 
   // Drag handlers
   const handleDragStart = (e: React.DragEvent) => {
-    if (collection.isDefault) {
-      e.preventDefault()
-      return
-    }
-    e.dataTransfer.setData('text/plain', collection.id)
-    e.dataTransfer.setData('application/x-collection-id', collection.id)
-    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData("text/plain", collection.id)
+    e.dataTransfer.setData("application/x-collection-id", collection.id)
+    e.dataTransfer.effectAllowed = "move"
     // Use setTimeout to ensure state updates after the drag image is captured
     setTimeout(() => onDragStart(collection.id), 0)
   }
@@ -680,9 +886,11 @@ function CollectionItem({
     e.preventDefault()
     e.stopPropagation()
     // Check if this is a collection or SVG drag
-    const isCollectionDrag = e.dataTransfer.types.includes('application/x-collection-id')
-    const isSvgDrag = e.dataTransfer.types.includes('application/x-svg-id')
-    if ((isCollectionDrag && !collection.isDefault) || isSvgDrag) {
+    const isCollectionDrag = e.dataTransfer.types.includes(
+      "application/x-collection-id",
+    )
+    const isSvgDrag = e.dataTransfer.types.includes("application/x-svg-id")
+    if (isCollectionDrag || isSvgDrag) {
       onDropTargetChange(collection.id)
     }
   }
@@ -705,13 +913,13 @@ function CollectionItem({
     e.stopPropagation()
 
     // Check if it's an SVG drag
-    const isSvgDrag = e.dataTransfer.types.includes('application/x-svg-id')
-    const droppedId = e.dataTransfer.getData('text/plain')
+    const isSvgDrag = e.dataTransfer.types.includes("application/x-svg-id")
+    const droppedId = e.dataTransfer.getData("text/plain")
 
     if (isSvgDrag && droppedId) {
       // Move SVG to this collection
       onMoveSvgToCollection(droppedId, collection.id)
-    } else if (droppedId && droppedId !== collection.id && !collection.isDefault) {
+    } else if (droppedId && droppedId !== collection.id) {
       // Move collection
       onMoveCollection(droppedId, collection.id)
     }
@@ -727,41 +935,36 @@ function CollectionItem({
         )}
 
         <div
-          draggable={!collection.isDefault}
+          draggable
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           className={clsx(
-            'group flex w-full items-center gap-1.5 text-sm font-normal leading-6 transition-all duration-300 ease-in-out rounded-md px-2 py-1',
-            !collection.isDefault && 'cursor-grab active:cursor-grabbing',
-            collection.isDefault && 'cursor-pointer',
+            "group flex w-full items-center gap-1.5 text-sm font-normal leading-6 transition-all duration-300 ease-in-out rounded-md px-2 py-1",
+            "cursor-grab active:cursor-grabbing",
             isActive
-              ? 'bg-gray-100 text-gray-900'
-              : 'text-gray-900 hover:bg-gray-50',
-            isDragOver && 'ring-2 ring-red-500 bg-red-50',
-            isBeingDragged && 'opacity-50'
+              ? "bg-gray-100 text-gray-900"
+              : "text-gray-900 hover:bg-gray-50",
+            isDragOver && "ring-2 ring-red-500 bg-red-50",
+            isBeingDragged && "opacity-50",
           )}
           style={{ paddingLeft: `${4 + depth * 16}px` }}
           onClick={onSelect}
           onContextMenu={handleContextMenu}
         >
-          {/* Drag handle - only show for non-default collections */}
-          {!collection.isDefault ? (
-            <span className="flex-shrink-0 text-gray-300 group-hover:text-gray-400 cursor-grab active:cursor-grabbing">
-              <svg className="w-4 h-4" viewBox="0 0 16 16" fill="currentColor">
-                <circle cx="5" cy="3" r="1.5" />
-                <circle cx="11" cy="3" r="1.5" />
-                <circle cx="5" cy="8" r="1.5" />
-                <circle cx="11" cy="8" r="1.5" />
-                <circle cx="5" cy="13" r="1.5" />
-                <circle cx="11" cy="13" r="1.5" />
-              </svg>
-            </span>
-          ) : (
-            <span className="w-4 flex-shrink-0" />
-          )}
+          {/* Drag handle */}
+          <span className="flex-shrink-0 text-gray-300 group-hover:text-gray-400 cursor-grab active:cursor-grabbing">
+            <svg className="w-4 h-4" viewBox="0 0 16 16" fill="currentColor">
+              <circle cx="5" cy="3" r="1.5" />
+              <circle cx="11" cy="3" r="1.5" />
+              <circle cx="5" cy="8" r="1.5" />
+              <circle cx="11" cy="8" r="1.5" />
+              <circle cx="5" cy="13" r="1.5" />
+              <circle cx="11" cy="13" r="1.5" />
+            </svg>
+          </span>
 
           {/* Expand/collapse arrow */}
           {hasChildren ? (
@@ -773,12 +976,20 @@ function CollectionItem({
               className="w-4 h-4 flex-shrink-0 flex items-center justify-center"
             >
               <svg
-                className={clsx('w-3 h-3 transition-transform', isExpanded && 'rotate-90')}
+                className={clsx(
+                  "w-3 h-3 transition-transform",
+                  isExpanded && "rotate-90",
+                )}
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
               </svg>
             </button>
           ) : (
@@ -791,31 +1002,29 @@ function CollectionItem({
           ) : (
             <svg
               className={clsx(
-                'w-4 h-4 flex-shrink-0',
+                "w-4 h-4 flex-shrink-0",
                 depth === 0
                   ? COLLECTION_COLORS[colorIndex].primary
-                  : COLLECTION_COLORS[colorIndex].secondary
+                  : COLLECTION_COLORS[colorIndex].secondary,
               )}
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+              />
             </svg>
           )}
 
           <span className="flex-1 truncate">{collection.name}</span>
 
-          {/* Default collection star */}
-          {collection.isDefault && (
-            <span className="text-yellow-500 text-xs" title="Default collection">
-              &#9733;
-            </span>
-          )}
-
           {/* SVG count */}
           <span className="text-xs text-gray-400">
-            {collection.svgs.filter(s => !s.archivedAt).length}
+            {countSvgsDeep(collection)}
           </span>
         </div>
 
@@ -868,7 +1077,7 @@ function CollectionItem({
             <button
               onClick={() => {
                 closeContextMenu()
-                const name = prompt('Rename collection:', collection.name)
+                const name = prompt("Rename collection:", collection.name)
                 if (name && name.trim()) {
                   onRename(name.trim())
                 }
@@ -877,18 +1086,16 @@ function CollectionItem({
             >
               Rename
             </button>
-            {!collection.isDefault && (
-              <button
-                onClick={() => {
-                  closeContextMenu()
-                  onCreateSub()
-                }}
-                className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-              >
-                Create sub-collection
-              </button>
-            )}
-            {!collection.isDefault && depth > 0 && (
+            <button
+              onClick={() => {
+                closeContextMenu()
+                onCreateSub()
+              }}
+              className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+            >
+              Create sub-collection
+            </button>
+            {depth > 0 && (
               <button
                 onClick={() => {
                   closeContextMenu()
@@ -899,17 +1106,15 @@ function CollectionItem({
                 Move to root
               </button>
             )}
-            {!collection.isDefault && (
-              <button
-                onClick={() => {
-                  closeContextMenu()
-                  onArchive()
-                }}
-                className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-              >
-                Archive
-              </button>
-            )}
+            <button
+              onClick={() => {
+                closeContextMenu()
+                onArchive()
+              }}
+              className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+            >
+              Archive
+            </button>
           </div>
         </>
       )}
@@ -924,7 +1129,12 @@ interface ArchivedCollectionItemProps {
   onDelete: () => void
 }
 
-function ArchivedCollectionItem({ collection, retentionDays, onRestore, onDelete }: ArchivedCollectionItemProps) {
+function ArchivedCollectionItem({
+  collection,
+  retentionDays,
+  onRestore,
+  onDelete,
+}: ArchivedCollectionItemProps) {
   const [showContextMenu, setShowContextMenu] = useState(false)
   const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 })
 
@@ -952,11 +1162,24 @@ function ArchivedCollectionItem({ collection, retentionDays, onRestore, onDelete
         className="group flex w-full items-center gap-2 text-sm font-normal leading-6 transition-all duration-300 ease-in-out rounded-md px-2 py-1 cursor-pointer text-gray-400 hover:bg-gray-50"
         onContextMenu={handleContextMenu}
       >
-        <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+        <svg
+          className="w-4 h-4 flex-shrink-0"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
+          />
         </svg>
         <span className="flex-1 truncate">{collection.name}</span>
-        <span className="text-xs" title={`Auto-deletes in ${daysRemaining} days`}>
+        <span
+          className="text-xs"
+          title={`Auto-deletes in ${daysRemaining} days`}
+        >
           {daysRemaining}d
         </span>
       </li>
@@ -964,7 +1187,10 @@ function ArchivedCollectionItem({ collection, retentionDays, onRestore, onDelete
       {/* Context Menu */}
       {showContextMenu && (
         <>
-          <div className="fixed inset-0 z-50" onClick={() => setShowContextMenu(false)} />
+          <div
+            className="fixed inset-0 z-50"
+            onClick={() => setShowContextMenu(false)}
+          />
           <div
             className="fixed z-50 w-48 bg-white border border-gray-200 rounded-lg shadow-xl py-1"
             style={{ left: contextMenuPos.x, top: contextMenuPos.y }}
@@ -981,7 +1207,11 @@ function ArchivedCollectionItem({ collection, retentionDays, onRestore, onDelete
             <button
               onClick={() => {
                 setShowContextMenu(false)
-                if (confirm(`Permanently delete "${collection.name}"? This cannot be undone.`)) {
+                if (
+                  confirm(
+                    `Permanently delete "${collection.name}"? This cannot be undone.`,
+                  )
+                ) {
                   onDelete()
                 }
               }}

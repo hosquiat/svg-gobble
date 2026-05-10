@@ -31,7 +31,6 @@ router.get('/', async (_req: Request, res: Response) => {
         parentId: null, // Only root collections
       },
       orderBy: [
-        { isDefault: 'desc' },
         { createdAt: 'asc' },
       ],
     })
@@ -138,10 +137,6 @@ router.delete('/:id', async (req: Request<IdParams>, res: Response) => {
       return res.status(404).json({ success: false, error: 'Collection not found' })
     }
 
-    if (existing.isDefault) {
-      return res.status(400).json({ success: false, error: 'Cannot delete the default collection' })
-    }
-
     await prisma.collection.delete({ where: { id } })
 
     res.json({ success: true, message: 'Collection deleted' })
@@ -161,10 +156,6 @@ router.post('/:id/archive', async (req: Request<IdParams>, res: Response) => {
     const existing = await prisma.collection.findUnique({ where: { id } })
     if (!existing) {
       return res.status(404).json({ success: false, error: 'Collection not found' })
-    }
-
-    if (existing.isDefault) {
-      return res.status(400).json({ success: false, error: 'Cannot archive the default collection' })
     }
 
     const collection = await prisma.collection.update({

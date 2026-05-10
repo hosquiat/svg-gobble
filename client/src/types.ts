@@ -23,7 +23,6 @@ export interface Collection {
   id: string
   name: string
   emoji?: string
-  isDefault: boolean
   parentId?: string | null
   children?: Collection[]
   createdAt: string
@@ -34,7 +33,6 @@ export interface Collection {
 
 export interface Settings {
   id: string
-  defaultCollectionId: string | null
   cardSize: number
   showSizes: boolean
   showNames: boolean

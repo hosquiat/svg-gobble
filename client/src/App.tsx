@@ -98,8 +98,7 @@ function App() {
   // Set default active collection on load
   useEffect(() => {
     if (!activeCollectionId && allCollections.length > 0) {
-      const defaultCollection = allCollections.find(c => c.isDefault) || allCollections[0]
-      setActiveCollectionId(defaultCollection.id)
+      setActiveCollectionId(allCollections[0].id)
     }
   }, [activeCollectionId, allCollections, setActiveCollectionId])
 
@@ -310,7 +309,7 @@ function App() {
 
   // Inline name editing
   const startEditingName = () => {
-    if (activeCollection && !activeCollection.isDefault) {
+    if (activeCollection) {
       setEditedName(activeCollection.name)
       setIsEditingName(true)
     }
@@ -592,12 +591,9 @@ function App() {
                   Search Results
                 </h1>
               ) : activeView === 'all-svgs' ? (
-                <h1 className="text-lg font-semibold text-gray-900">All SVGs</h1>
+                <h1 className="text-lg font-semibold text-gray-900">Show All SVGs</h1>
               ) : (
                 <>
-                  {activeCollection?.isDefault && (
-                    <span className="text-yellow-500" title="Default collection">&#9733;</span>
-                  )}
                   {isEditingName ? (
                     <input
                       type="text"
@@ -615,10 +611,10 @@ function App() {
                     <h1
                       className={clsx(
                         'text-lg font-semibold text-gray-900',
-                        activeCollection && !activeCollection.isDefault && 'cursor-pointer hover:text-red-600'
+                        activeCollection && 'cursor-pointer hover:text-red-600'
                       )}
                       onClick={startEditingName}
-                      title={activeCollection && !activeCollection.isDefault ? 'Click to rename' : undefined}
+                      title={activeCollection ? 'Click to rename' : undefined}
                     >
                       {activeCollection?.name || 'No collection selected'}
                     </h1>
@@ -1068,7 +1064,6 @@ function App() {
       {showSettingsModal && (
         <SettingsPage
           settings={settings}
-          collections={allCollections}
           onUpdateSettings={updateSettings}
           onClose={() => setShowSettingsModal(false)}
         />

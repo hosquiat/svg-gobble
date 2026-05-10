@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react'
 import clsx from 'clsx'
-import type { Settings, Collection } from '../types'
+import type { Settings } from '../types'
 import { BackupSettings } from './BackupSettings'
 import { DatabaseSettings } from './DatabaseSettings'
 import { versionApi } from '../api/client'
 
 interface SettingsPageProps {
   settings: Settings
-  collections: Collection[]
   onUpdateSettings: (data: Partial<Omit<Settings, 'id'>>) => Promise<void>
   onClose: () => void
 }
@@ -25,7 +24,6 @@ const CARD_SIZE_OPTIONS = [
 
 export function SettingsPage({
   settings,
-  collections,
   onUpdateSettings,
   onClose,
 }: SettingsPageProps) {
@@ -37,9 +35,6 @@ export function SettingsPage({
   useEffect(() => {
     versionApi.get().then(setAppVersion)
   }, [])
-
-  // Find default collection name
-  const defaultCollection = collections.find(c => c.isDefault)
 
   const handleSave = async () => {
     setSaving(true)
@@ -110,20 +105,6 @@ export function SettingsPage({
         <div className="flex-1 overflow-y-auto px-6 py-4">
           {activeTab === 'general' && (
             <div className="space-y-6">
-              {/* Default Collection (read-only) */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Default Collection
-                </label>
-                <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg">
-                  <span className="text-yellow-500">&#9733;</span>
-                  <span className="text-gray-900">{defaultCollection?.name || 'None'}</span>
-                </div>
-                <p className="mt-1 text-xs text-gray-500">
-                  The default collection cannot be changed. New SVGs will be added here when no collection is selected.
-                </p>
-              </div>
-
               {/* Optimization Preset */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">

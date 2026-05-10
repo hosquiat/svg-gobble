@@ -4,7 +4,6 @@ import { settingsApi } from '../api/client'
 
 const DEFAULT_SETTINGS: Settings = {
   id: 'singleton',
-  defaultCollectionId: null,
   cardSize: 192,
   showSizes: true,
   showNames: true,

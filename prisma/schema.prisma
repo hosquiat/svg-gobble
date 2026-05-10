@@ -11,7 +11,6 @@ model Collection {
   id         String       @id @default(uuid())
   name       String
   emoji      String?
-  isDefault  Boolean      @default(false)
   parentId   String?
   parent     Collection?  @relation("SubCollections", fields: [parentId], references: [id], onDelete: Cascade)
   children   Collection[] @relation("SubCollections")
@@ -40,7 +39,6 @@ model Svg {
 
 model Settings {
   id                    String  @id @default("singleton")
-  defaultCollectionId   String?
   cardSize              Int     @default(192)
   showSizes             Boolean @default(true)
   showNames             Boolean @default(true)
@@ -82,5 +80,6 @@ model Backup {
   status      String
   error       String?
   driveFileId String?
+  contentHash String?
   createdAt   DateTime @default(now())
 }

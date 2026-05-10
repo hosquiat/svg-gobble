@@ -27,7 +27,13 @@ export async function runBackup(): Promise<void> {
     // Create local backup if enabled
     if (settings.localBackupEnabled) {
       console.log('[Backup Job] Creating local backup...')
-      const { backup, filePath } = await createBackup()
+      const { backup, filePath, skipped } = await createBackup()
+
+      if (skipped) {
+        console.log('[Backup Job] No changes detected, skipping backup.')
+        return
+      }
+
       if (backup) {
         console.log(`[Backup Job] Local backup created: ${backup.filename}`)
       }

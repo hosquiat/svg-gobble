@@ -214,32 +214,13 @@ app.get('*', (_req: Request, res: Response) => {
   res.sendFile(path.join(clientPath, 'index.html'))
 })
 
-// Seed the database with default collection if needed
+// Ensure settings row exists
 async function seedDatabase() {
-  const existingDefault = await prisma.collection.findFirst({
-    where: { isDefault: true },
+  await prisma.settings.upsert({
+    where: { id: 'singleton' },
+    update: {},
+    create: { id: 'singleton' },
   })
-
-  if (!existingDefault) {
-    console.log('Creating default collection...')
-    const defaultCollection = await prisma.collection.create({
-      data: {
-        name: 'Default',
-        emoji: '⚡',
-        isDefault: true,
-      },
-    })
-
-    await prisma.settings.upsert({
-      where: { id: 'singleton' },
-      update: { defaultCollectionId: defaultCollection.id },
-      create: {
-        id: 'singleton',
-        defaultCollectionId: defaultCollection.id,
-      },
-    })
-    console.log('Default collection created')
-  }
 }
 
 // Initialize database and start server
@@ -259,7 +240,7 @@ async function start() {
     startBackupJob()
 
     app.listen(PORT, () => {
-      console.log(`SVG Service running on port ${PORT}`)
+      console.log(`SVG Service running at http://localhost:${PORT}`)
       console.log(`Health check: http://localhost:${PORT}/health`)
       console.log(`Scrape endpoint: POST http://localhost:${PORT}/scrape`)
       console.log(`Parse endpoint: POST http://localhost:${PORT}/parse`)
